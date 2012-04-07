@@ -1,21 +1,19 @@
 = Bullring
 
 Bullring is a ruby gem for safely running untrusted Javascript code.  Javascript
-is the bull you want to watch with but would like to protect yourself from.
+is the bull you want to watch but would like to protect yourself from.
 
 == Features
 
 * Runs the Javascript code in a separate process
 * Lets you limit the number of instructions used by the untrusted code
-* Uses therubyrhino to provide safe execution (though does not require your 
-app to run on jruby)
+* Uses therubyrhino to provide safe execution (though does not require your app to run on jruby)
 * Pre-verifies the code by running it through JSLint
 * Minifies the code for increased performance
 
 == Requirements
 
-* Currently requires that rvm is available and that jruby has been installed 
-through rvm (note that the rest of your code does NOT need to run on jruby)
+* Currently requires that rvm is available and that jruby has been installed through rvm (note that the rest of your code does NOT need to run on jruby)
 
 == Usage
 
@@ -28,8 +26,8 @@ should note that bulls have gotten out before (http://tgr.ph/9tXxbc).  It is our
 sincere hope that Bullring can protect you from bad side effects when running 
 untrusted code.  However, Javascript is a full-blown language and Bullring is and 
 contains open source software; both can have security holes, so you are urged
-to be prudent when using Bullring in your application.  If you find a security
-hole, please let us know or contribute a patch.  
+to be prudent when using Bullring in your application (see MIT-LICENSE for more details).
+If you find a security hole, please let us know or contribute a patch.  
 
 == Copyright
 
