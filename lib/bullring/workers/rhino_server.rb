@@ -24,7 +24,7 @@ module Bullring
       end
     end
     
-    def isAlive
+    def alive?
       true
     end
     
@@ -34,18 +34,8 @@ module Bullring
     end
     
     def self.start(myPort, clientPort)
-      # start up the DRb service, and wait for the DRb service to finish before exiting
-      DRb.start_service "druby://localhost:2250", Bullring::RhinoServer.new
+      DRb.start_service "druby://localhost:#{myPort}", Bullring::RhinoServer.new
       DRb.thread.join
-      #     puts "presleep"
-      #     while (!DRb.current_server.alive?) 
-      #       sleep(0.2)
-      #       puts "sleeping"
-      #     end
-      # sleep(10)
-
-      # client = DRbObject.new nil, "druby://localhost:#{clientPort}"
-      # client.server_has_started
     end
     
   end
