@@ -15,12 +15,12 @@ module Bullring
       @worker
     end
     
-    def addLibraryFile(filename)
-      worker.addLibraryFile(filename)
+    def add_library_file(filename)
+      worker.add_library_file(filename)
     end
     
-    def addLibrary(script)
-      worker.addLibrary(script)
+    def add_library(script)
+      worker.add_library(script)
     end
     
     def check(script, options = {})
@@ -31,8 +31,8 @@ module Bullring
       worker.run(script, options)
     end
     
-    def isAlive?
-      worker.isAlive?
+    def alive?
+      worker.alive?
     end
     
     # Really only useful in development

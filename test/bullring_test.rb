@@ -7,7 +7,7 @@ class BullringTest < ActiveSupport::TestCase
   
   test "bullring_runs" do
     begin
-      Bullring.isAlive?
+      Bullring.alive?
     rescue SystemExit
     end
     
@@ -15,7 +15,7 @@ class BullringTest < ActiveSupport::TestCase
     sleep(10.0)
     puts "Post"
     
-    while !Bullring.isAlive?
+    while !Bullring.alive?
       puts 'not alive'
       sleep(1)
     end

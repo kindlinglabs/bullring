@@ -5,11 +5,11 @@ require 'drb'
 module Bullring
 
   class RhinoServer
-    def addLibrary(script)
+    def add_library(script)
       
     end
     
-    def addLibraryFile(filename)
+    def add_library_file(filename)
       
     end
     

@@ -33,12 +33,12 @@ module Bullring
     # can repopulate its library scripts; alternatively, we could pass the library scripts
     # in on the command line, in which case the restarting would pick them up)
     
-    def addLibrary(script)
+    def add_library(script)
       # this guy needs to maintain the library scripts in case the daemon restarts
       raise NotYetImplemented
     end
 
-    def addLibraryFile(filename)
+    def add_library_file(filename)
       raise NotYetImplemented
     end
 
@@ -50,7 +50,7 @@ module Bullring
       server.run(script, options)
     end
 
-    def isAlive?
+    def alive?
       server.alive?
     end
     

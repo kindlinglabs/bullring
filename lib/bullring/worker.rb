@@ -6,11 +6,11 @@ require 'bullring/util/exceptions'
 module Bullring
   class Worker
 
-    def addLibrary(script)
+    def add_library(script)
       raise AbstractMethodCalled
     end
     
-    def addLibraryFile(filename)
+    def add_library_file(filename)
       raise AbstractMethodCalled
     end
     
@@ -22,7 +22,7 @@ module Bullring
       raise AbstractMethodCalled
     end
     
-    def isAlive?
+    def alive?
       raise AbstractMethodCalled
     end
     
