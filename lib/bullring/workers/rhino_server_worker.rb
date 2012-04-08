@@ -18,9 +18,9 @@ module Bullring
     
     def discard
       # Daemons.run(server_command, stop_options) 
-      @tunnel.kill if !@tunnel.nil?
+      @server.kill if !@server.nil?
       DRb.stop_service 
-      @tunnel = nil
+      @server = nil
     end
     
     def initialize
@@ -40,19 +40,19 @@ module Bullring
       # puts @port
       debugger
 
-      
-      
-      if server_online?
-        connect_to_server
-      else
-        Process.spawn(server_command, "#{Bullring.root}", "start", "#{Bullring.configuration.server_port}")#, "#{@port}")
-        
-        while (!server_online?)
-          sleep(0.2)
-        end
-        
-        connect_to_server
-      end
+      connect_to_server!
+         #    
+         # if server_online?
+         #   connect_to_server
+         # else
+         #   Process.spawn(server_command, "#{Bullring.root}", "start", "#{Bullring.configuration.server_port}")#, "#{@port}")
+         #   
+         #   while (!server_online?)
+         #     sleep(0.2)
+         #   end
+         #   
+         #   connect_to_server
+         # end
    
 
             # Daemons.run(server_command, start_options)  
@@ -78,26 +78,66 @@ module Bullring
     end
 
     def run(script, options)
-      tunnel.run(script, options)
+      isAlive? || connect_to_server!
+      server.run(script, options)
     end
 
     def isAlive?
-      # TODO Look into Daemons::Monitor to make sure all is well. (or check all is well every few minutes?)
-      # something like Daemons.group.first.running?
-      !tunnel.nil? && tunnel.isAlive
+      begin
+        !server.nil? && server.isAlive
+      rescue DRb::DRbConnError
+        return false
+      end
     end
     
   private
     
-    attr_accessor :tunnel 
+    attr_accessor :server 
     
-    def server_online?
+    def server_port_active?
       Network::is_port_in_use?('localhost',2250)
     end
     
+    # If the server is online, this is the same as connect_to_server; otherwise,
+    # this starts the server and then connects to it.
+    def connect_to_server!
+      if server_port_active?
+        connect_to_server
+      else
+        Process.spawn(server_command, "#{Bullring.root}", "start", "#{Bullring.configuration.server_port}")#, "#{@port}")
+        
+        while (!server_port_active?)
+          sleep(0.2)
+        end
+        
+        connect_to_server
+      end
+    end
+    
+    # Sets up the DRb connection to the server (which is expected to be running)
     def connect_to_server
-      # puts "in connect_to_server"
-      @tunnel = DRbObject.new nil, "druby://localhost:2250"
+      @server = DRbObject.new nil, "druby://localhost:2250"
+    end
+    
+    class ServerWrapper < DRbObject
+
+      def initialize
+        super(nil, "druby://localhost:2250")
+      end
+
+      def alive?
+        begin
+          super.isAlive
+        rescue DRb::DRbConnError
+          return false
+        end
+      end
+
+      def method_missing(m, *args, &block)  
+        isAlive? || connect_to_server!
+        super(m, args, block)
+      end
+      
     end
     
     # def options
