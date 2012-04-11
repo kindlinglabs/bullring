@@ -35,15 +35,15 @@ module Bullring
     
     def add_library(script)
       # this guy needs to maintain the library scripts in case the daemon restarts
-      raise NotYetImplemented
+      server.add_library(script)
     end
 
     def add_library_file(filename)
-      raise NotYetImplemented
+      server.add_library_script(filename)
     end
 
     def check(script, options)
-      raise NotYetImplemented
+      server.check(script, options)
     end
 
     def run(script, options)

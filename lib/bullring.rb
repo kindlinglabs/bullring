@@ -4,21 +4,13 @@ require 'bullring/worker'
 module Bullring
   
   class << self
-    
-    attr_accessor :worker 
-    def worker
-      if @worker.nil?
-        # TODO here, choose the appropriate worker (may be a non-server one for dev)
-        @worker = RhinoServerWorker.new
-      end
-      
-      @worker
-    end
-    
+        
+    # Order is important (and relative to calls to add_library)
     def add_library_file(filename)
       worker.add_library_file(filename)
     end
     
+    # Order is important (and relative to calls to add_library_script)
     def add_library(script)
       worker.add_library(script)
     end
@@ -68,15 +60,27 @@ module Bullring
     class Configuration
       attr_accessor :execution_timeout
       attr_accessor :server_port
-      attr_accessor :pid_dir
       
       def initialize      
         @execution_timeout = 500
         @server_port = 3030
-        @pid_dir = '/var/tmp/bullring_pids' # TODO pick something better in general
         super
       end
     end
+    
+  private
+    
+    attr_accessor :worker 
+    
+    def worker
+      if @worker.nil?
+        # TODO here, choose the appropriate worker (may be a non-server one for dev)
+        @worker = RhinoServerWorker.new
+      end
+      
+      @worker
+    end
+    
     
   end
   

@@ -16,13 +16,18 @@ Gem::Specification.new do |s|
   s.files = Dir["{app,config,db,lib}/**/*"] + ["MIT-LICENSE", "Rakefile", "README.rdoc"]
   s.test_files = Dir["test/**/*"]
 
+  s.platform = $platform || RUBY_PLATFORM[/java/] || 'ruby'
+
   s.add_dependency "rails", "~> 3.2.2"
-  # s.add_dependency "eventmachine"
-  s.add_dependency "daemons"
   s.add_dependency "uglifier"
   s.add_dependency "therubyrhino"
-  # s.add_dependency "brb"
 
   s.add_development_dependency "sqlite3"
-  s.add_development_dependency "ruby-debug19"
+  
+  if s.platform.to_s == 'java'
+    s.add_development_dependency 'ruby-debug'
+  else
+    s.add_development_dependency "ruby-debug19"    
+  end
+
 end
