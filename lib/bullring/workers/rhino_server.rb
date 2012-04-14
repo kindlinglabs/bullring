@@ -1,4 +1,3 @@
-require 'rubygems'
 require 'rhino'
 require 'drb'
 
@@ -53,7 +52,7 @@ module Bullring
     end
 
     def run(script, options)
-      Rhino::Context.open(:sealed => true) do |context|
+      Rhino::Context.open(:sealed => true, :restrictable => true) do |context|
         @library_scripts.each {|library| context.eval(library)}        
         context.instruction_limit = 100000        
         context.eval(script)

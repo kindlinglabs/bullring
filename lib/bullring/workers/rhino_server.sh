@@ -19,13 +19,18 @@ else
 
 fi
 
-current_gem_dir=`rvm gemdir name`
-
 export JAVA_OPTS="-Djava.net.preferIPv4Stack=true"
 
+rhino_gem_dir=`bundle show therubyrhino`
+
 rvm use jruby
+ruby_bin=`which ruby`
 
-export GEM_PATH=$current_gem_dir
+GEM_HOME=
+IRBRC=
+BUNDLE_GEMFILE=
+GEM_PATH=
+RUBYOPT=
+BUNDLE_BIN_PATH=
 
-ruby $1/bullring/workers/rhino_server.rb $2 $3 $4 $5 $6
-
+$ruby_bin -I $rhino_gem_dir/lib $1/bullring/workers/rhino_server.rb $2 $3 $4 $5 $6

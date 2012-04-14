@@ -18,14 +18,14 @@ Gem::Specification.new do |s|
 
   s.platform = $platform || RUBY_PLATFORM[/java/] || 'ruby'
 
-  s.add_dependency "rails", "~> 3.2.2"
   s.add_dependency "uglifier"
   s.add_dependency "therubyrhino"
 
   s.add_development_dependency "sqlite3"
+  s.add_development_dependency "rails", "~> 3.2.2"
   
   if s.platform.to_s == 'java'
-    s.add_development_dependency 'ruby-debug'
+    # s.add_development_dependency 'ruby-debug'
   else
     s.add_development_dependency "ruby-debug19"    
   end
