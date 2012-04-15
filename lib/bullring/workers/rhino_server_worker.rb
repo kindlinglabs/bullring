@@ -48,8 +48,8 @@ module Bullring
 
     def run(script, options)
       begin
-        # debugger
-        server.run(script, options)
+        result = server.run(script, options)
+        result.respond_to?(:to_h) ? result.to_h : result
       rescue DRb::DRbUnknownError => e
         raise e.unknown
       rescue Bullring::JSError => e
