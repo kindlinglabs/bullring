@@ -23,6 +23,7 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency "sqlite3"
   s.add_development_dependency "rails", "~> 3.2.2"
+  s.add_development_dependency 'test-unit'
   
   if s.platform.to_s == 'java'
     # s.add_development_dependency 'ruby-debug'

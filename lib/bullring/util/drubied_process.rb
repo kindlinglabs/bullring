@@ -40,7 +40,8 @@ module Bullring
 
     def method_missing(m, *args, &block)  
       restart_if_needed!
-      @process.method_missing(m, args, block)
+      # @process.method_missing(m, args, block)
+      @process.send(m, *args, &block)
     end
 
     def process_port_active?

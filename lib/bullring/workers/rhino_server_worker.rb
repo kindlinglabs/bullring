@@ -47,7 +47,14 @@ module Bullring
     end
 
     def run(script, options)
-      server.run(script, options)
+      begin
+        # debugger
+        server.run(script, options)
+      rescue DRb::DRbUnknownError => e
+        raise e.unknown
+      rescue Bullring::JSError => e
+        raise e
+      end
     end
 
     def alive?
@@ -59,5 +66,8 @@ module Bullring
     attr_accessor :server 
 
   end
+  
 
+  
 end
+

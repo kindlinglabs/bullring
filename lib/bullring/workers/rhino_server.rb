@@ -1,5 +1,6 @@
 require 'rhino'
 require 'drb'
+# require 'logger'
 
 module Bullring
 
@@ -7,6 +8,8 @@ module Bullring
     
     def initialize
       @library_scripts = []
+      # @log = Logger.new('log.txt')
+      # @log.level = Logger::DEBUG
     end
     
     def add_library(script)
@@ -52,10 +55,25 @@ module Bullring
     end
 
     def run(script, options)
-      Rhino::Context.open(:sealed => true, :restrictable => true) do |context|
-        @library_scripts.each {|library| context.eval(library)}        
-        context.instruction_limit = 100000        
-        context.eval(script)
+      begin
+        Rhino::Context.open(:sealed => true, :restrictable => true) do |context|
+          @library_scripts.each {|library| context.eval(library)}        
+          context.instruction_limit = 100000        
+          context.eval(script)
+        end
+      rescue Rhino::JSError => e
+        # @log.debug("JSError! Cause: " + e.cause + "; Message: " + e.message + "; script: " + script.inspect)
+        jsError = JSError.new
+        jsError.cause = e.cause.to_s
+        jsError.message = e.message.to_s
+        jsError.backtrace = []
+        raise jsError
+      rescue Exception => e
+        # @log.debug("Exception: " + e.inspect)
+        raise e
+      rescue Error => e
+        # @log.debug("Error: " + e.inspect)
+        raise e
       end
     end
     
@@ -74,6 +92,13 @@ module Bullring
     end
     
   end
+  
+  class JSError < StandardError
+    attr_accessor :cause
+    attr_accessor :backtrace
+    attr_accessor :message
+  end
+  
 end
 
 #

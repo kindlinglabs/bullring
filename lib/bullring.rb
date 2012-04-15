@@ -81,7 +81,47 @@ module Bullring
       @worker
     end
     
+    # ESCAPE_MAP = {
+    #    '\\' => '\\\\', 
+    #    "\r\n" => '\n', 
+    #    "\n" => '\n', 
+    #    "\r" => '\n', 
+    #    '"' => '\"', 
+    #    "'" => "\'"
+    #  }
+    # 
+    #  def prepare_source(source)
+    #    
+    #    # escape javascript characters (similar to Rails escape_javascript)
+    #    source.gsub!(/(\\|\r\n|[\n\r"'])/u) {|match| ESCAPE_MAP[match] }
+    # 
+    #    # make sure the source string is set up to be a multiline string in JS
+    #    source.gsub!(/\n/, '\ \n')   
+    # 
+    #    source   
+    #  end
     
+    # ESCAPE_MAP2 = {
+    #    '\\' => '\\\\', 
+    #    "\r\n" => "\n", 
+    #    "\n" => "\n", 
+    #    "\r" => "\n", # take these semicolons out b/c we should only use them at the end of a statement; in fact just kill comments
+    #    '"' => '\"',  #need to make this surrounded by double quotes
+    #    "'" => "\'"
+    #  }
+    #  
+    #  
+    #  def prep_source(source)
+    #    # escape javascript characters (similar to Rails escape_javascript)
+    #    source.gsub!(/(\\|\r\n|[\n\r"'])/u) {|match| ESCAPE_MAP2[match] }
+    # 
+    #    # make sure the source string is set up to be a multiline string in JS
+    #    source.gsub!(/\n/, "\ \n")   
+    # 
+    #    source   
+    #    
+    #  end
+    #  
   end
   
 end
