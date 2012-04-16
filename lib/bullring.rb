@@ -5,6 +5,8 @@ module Bullring
   
   class << self
         
+    attr_accessor :logger
+    
     # Order is important (and relative to calls to add_library)
     def add_library_file(filename)
       worker.add_library_file(filename)
@@ -58,11 +60,11 @@ module Bullring
     end
 
     class Configuration
-      attr_accessor :execution_timeout
+      attr_accessor :execution_timeout_secs
       attr_accessor :server_port
       
       def initialize      
-        @execution_timeout = 500
+        @execution_timeout_secs = 0.5
         @server_port = 3030
         super
       end

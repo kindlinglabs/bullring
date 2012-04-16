@@ -58,6 +58,7 @@ module Bullring
         end
       end
 
+      DRb.start_service "druby://localhost:0"
       @process = DRbObject.new nil, "druby://#{@options[:process][:host]}:#{@options[:process][:port]}"
     end
   end

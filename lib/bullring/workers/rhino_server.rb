@@ -8,8 +8,18 @@ module Bullring
     
     def initialize
       @library_scripts = []
-      @log = Logger.new('log.txt')
-      @log.level = Logger::DEBUG
+      configure
+    end
+    
+    def configure(options={})
+      @options ||= { :run_is_sealed => false,
+                     :run_is_restrictable => true,
+                     :run_timeout_secs => 0.5 }
+
+      # Don't do a merge b/c jruby and ruby don't play nicely for some reason
+      options.each{|k,v| @options[k] = v}
+      
+      @logger = options[:logger] || DummyLogger.new
     end
     
     def add_library(script)
@@ -55,31 +65,37 @@ module Bullring
     end
 
     def run(script, options)
-      begin # TODO make 'sealed' configurable
-        Rhino::Context.open(:sealed => false, :restrictable => true) do |context|
-          @library_scripts.each {|library| context.eval(library)}        
-          context.timeout_limit = 1
+      begin 
+        Rhino::Context.open(:sealed => @options[:run_is_sealed], :restrictable => @options[:run_is_restrictable]) do |context|
+          @library_scripts.each {|library| context.eval(library)}      
+            
+          context.timeout_limit = @options[:run_timeout_secs]
+          
+          start_time = Time.now
           result = context.eval(script)
-          @log.debug("result: " + result.inspect)
+          duration = Time.now - start_time
+          
+          @logger.debug("Ran script (#{duration} secs); result: " + result.inspect)
+          
           result
         end
       rescue Rhino::JSError => e
-        @log.debug("JSError! Cause: " + e.cause + "; Message: " + e.message + "; script: " + script.inspect)
+        @logger.debug("JSError! Cause: " + e.cause + "; Message: " + e.message + "; script: " + script.inspect)
         jsError = JSError.new
         jsError.cause = e.cause.to_s
         jsError.message = e.message.to_s
         jsError.backtrace = []
         raise jsError
       rescue Rhino::RunawayScriptError => e
-        @log.debug("Runaway Script: " + e.inspect)
+        @logger.debug("Runaway Script: " + e.inspect)
         jsError = JSError.new
         jsError.cause = "Script took too long to run"
         raise jsError
       rescue Exception => e
-        @log.debug("Exception: " + e.inspect)
+        @logger.debug("Exception: " + e.inspect)
         raise e
       rescue Error => e
-        @log.debug("Error: " + e.inspect)
+        @logger.debug("Error: " + e.inspect)
         raise e
       end
     end
@@ -104,6 +120,12 @@ module Bullring
     attr_accessor :cause
     attr_accessor :backtrace
     attr_accessor :message
+  end
+  
+  class DummyLogger
+    def method_missing(m, *args, &block)  
+      # ignore
+    end
   end
   
 end

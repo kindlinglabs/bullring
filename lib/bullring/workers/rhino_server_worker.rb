@@ -27,6 +27,9 @@ module Bullring
       }
       
       @server = DrubiedProcess.new(options)
+
+      @server.configure({:run_timeout_secs => Bullring.configuration.execution_timeout_secs, 
+                         :logger => Bullring.logger})
     end
     
     # TODO important! this guy needs to know if the daemon crashed and restarted (so that it
