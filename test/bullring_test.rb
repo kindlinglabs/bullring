@@ -286,4 +286,16 @@ class BullringTest < Test::Unit::TestCase #ActiveSupport::TestCase
     end
   end
   
+  test 'check' do
+    code = <<-CODE
+      a = 42;
+      y = 2*a;
+    CODE
+    
+    assert_nothing_raised do
+      Bullring.check(code)
+    end
+      
+  end
+  
 end

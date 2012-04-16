@@ -34,10 +34,10 @@ module Bullring
     
     def check(script, options)
       Rhino::Context.open do |context|
-        context.load(File.expand_path("../../js/jslint.min.js", __FILE__))
-
+        context_wrapper {context.load(File.expand_path("../../js/jslint.min.js", __FILE__))}
+        
         jslintCall = <<-RHINO_CALL
-          JSLINT('#{script}', {devel: false, 
+          JSLINT("#{prepare_source(script)}", {devel: false, 
                                bitwise: true, 
                                undef: true,
                                continue: true, 
@@ -60,44 +60,22 @@ module Bullring
                                indent: 4});
         RHINO_CALL
         
-        context.eval(jslintCall + "JSLINT.errors")      
+        duration, result = context_wrapper {context.eval(jslintCall + "JSLINT.errors")}
+        result
       end      
     end
 
     def run(script, options)
-      begin 
-        Rhino::Context.open(:sealed => @options[:run_is_sealed], :restrictable => @options[:run_is_restrictable]) do |context|
-          @library_scripts.each {|library| context.eval(library)}      
-            
-          context.timeout_limit = @options[:run_timeout_secs]
-          
-          start_time = Time.now
-          result = context.eval(script)
-          duration = Time.now - start_time
-          
-          @logger.debug("Ran script (#{duration} secs); result: " + result.inspect)
-          
-          result
+      Rhino::Context.open(:sealed => @options[:run_is_sealed], :restrictable => @options[:run_is_restrictable]) do |context|
+        @library_scripts.each do |library| 
+          context_wrapper {context.eval(library)}      
         end
-      rescue Rhino::JSError => e
-        @logger.debug("JSError! Cause: " + e.cause + "; Message: " + e.message + "; script: " + script.inspect)
-        jsError = JSError.new
-        jsError.cause = e.cause.to_s
-        jsError.message = e.message.to_s
-        jsError.backtrace = []
-        raise jsError
-      rescue Rhino::RunawayScriptError => e
-        @logger.debug("Runaway Script: " + e.inspect)
-        jsError = JSError.new
-        jsError.cause = "Script took too long to run"
-        raise jsError
-      rescue Exception => e
-        @logger.debug("Exception: " + e.inspect)
-        raise e
-      rescue Error => e
-        @logger.debug("Error: " + e.inspect)
-        raise e
-      end
+          
+        context.timeout_limit = @options[:run_timeout_secs]
+        
+        duration, result = context_wrapper {context.eval(script)}      
+        result
+      end      
     end
     
     def alive?
@@ -112,6 +90,55 @@ module Bullring
     def self.start(myPort, clientPort)
       DRb.start_service "druby://localhost:#{myPort}", Bullring::RhinoServer.new
       DRb.thread.join
+    end
+    
+    protected
+
+    def context_wrapper
+      begin 
+        start_time = Time.now
+        result = yield
+        duration = Time.now - start_time
+        
+        @logger.debug("Ran script (#{duration} secs); result: " + result.inspect)
+        
+        return duration, result
+      rescue Rhino::JSError => e
+        @logger.debug("JSError! Cause: " + e.cause + "; Message: " + e.message)
+        jsError = JSError.new
+        jsError.cause = e.cause.to_s
+        jsError.message = e.message.to_s
+        jsError.backtrace = []
+        raise jsError
+      rescue Rhino::RunawayScriptError => e
+        @logger.debug("Runaway Script: " + e.inspect)
+        jsError = JSError.new
+        jsError.cause = "Script took too long to run"
+        raise jsError
+      rescue NameError => e
+        @logger.debug("Name error: " + e.inspect)
+      rescue Exception => e
+        @logger.debug("Exception: " + e.inspect)
+        raise e
+      rescue Error => e
+        @logger.debug("Error: " + e.inspect)
+        raise e
+      end
+    end
+
+    ESCAPE_MAP = {
+      '\\' => '\\\\', 
+      "\r\n" => '\n', 
+      "\n" => '\n', 
+      "\r" => '\n', 
+      '"' => '\"', 
+      "'" => '\''
+    }
+          
+    def prepare_source(source) 
+     # escape javascript characters (similar to Rails escape_javascript)
+     source.gsub!(/(\\|\r\n|[\n\r"'])/u) {|match| ESCAPE_MAP[match] }
+     source   
     end
     
   end
