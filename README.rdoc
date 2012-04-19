@@ -6,16 +6,20 @@ is the bull you want to watch but would like to protect yourself from.
 == Features
 
 * Runs the Javascript code in a separate process
-* Lets you limit the number of instructions used by the untrusted code
+* Lets you limit how long the untrusted code can run
 * Uses therubyrhino to provide safe execution (though does not require your app to run on jruby)
 * Pre-verifies the code by running it through JSLint
-* Minifies the code for increased performance
+* Minifies the code for increased performance (coming soon)
 
 == Requirements
 
-* Currently requires that rvm is available and that jruby has been installed through rvm (note that the rest of your code does NOT need to run on jruby)
+* Currently requires that rvm is available and that jruby has been installed through rvm (note that the rest of your code does NOT need to run on jruby).  Options for an rvm-less use are definitely conceivable, so if you have this need let's talk.
 
 == Usage
+
+(Coming soon)
+
+== Contributing
 
 (Coming soon)
 
