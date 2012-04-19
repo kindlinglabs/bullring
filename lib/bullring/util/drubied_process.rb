@@ -19,8 +19,13 @@ module Bullring
     #   }
     # }
     #
-    def initialize(options)
+    # The provided block will be called whenever this process connects (or 
+    # reconnects) to a process, including when the process is restarted. This
+    # makes the block a good place to put initialization code for the process.
+    #
+    def initialize(options, &block)
       @options = options
+      @after_connect_block = block
       connect_to_process!
     end
 
@@ -40,7 +45,6 @@ module Bullring
 
     def method_missing(m, *args, &block)  
       restart_if_needed!
-      # @process.method_missing(m, args, block)
       @process.send(m, *args, &block)
     end
 
@@ -60,6 +64,8 @@ module Bullring
 
       DRb.start_service "druby://localhost:0"
       @process = DRbObject.new nil, "druby://#{@options[:process][:host]}:#{@options[:process][:port]}"
+      
+      @after_connect_block.call(@process) if !@after_connect_block.nil?
     end
   end
   

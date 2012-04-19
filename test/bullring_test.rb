@@ -1,6 +1,12 @@
 require 'test_helper'
 # require 'test/unit'
 # require 'bullring'
+require 'logger'
+
+if false
+  Bullring.logger = Logger.new('bullring_test_log.txt')
+  Bullring.logger.level = Logger::DEBUG
+end
 
 class BullringTest < Test::Unit::TestCase #ActiveSupport::TestCase
   test "truth" do

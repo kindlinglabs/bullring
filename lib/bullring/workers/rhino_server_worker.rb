@@ -4,6 +4,8 @@ module Bullring
 
   class RhinoServerWorker < Bullring::Worker
     
+    attr_reader :libraries
+    
     def discard
       # Daemons.run(server_command, stop_options) 
       # @server.kill if !@server.nil?
@@ -29,23 +31,24 @@ module Bullring
                   Bullring.configuration.jvm_young_heap_size]
       }
       
-      @server = DrubiedProcess.new(options)
-
-      @server.configure({:run_timeout_secs => Bullring.configuration.execution_timeout_secs, 
-                         :logger => Bullring.logger})
+      @libraries = []
+      
+      @server = DrubiedProcess.new(options) do |process|
+        process.configure({:run_timeout_secs => Bullring.configuration.execution_timeout_secs, 
+                           :logger => Bullring.logger})
+        process.load_setup(SetupProvider.new(self))
+      end
     end
     
-    # TODO important! this guy needs to know if the daemon crashed and restarted (so that it
-    # can repopulate its library scripts; alternatively, we could pass the library scripts
-    # in on the command line, in which case the restarting would pick them up)
-    
     def add_library(script)
-      # this guy needs to maintain the library scripts in case the daemon restarts
-      server.add_library(script)
+      # this guy needs to maintain the library scripts in case the server restarts, in which
+      # case the server will request the libraries through the SetupProvider
+      @libraries.push(script)
     end
 
     def add_library_file(filename)
-      server.add_library_script(filename)
+      raise NotYetImplemented
+      # server.add_library_script(filename)
     end
 
     def check(script, options)
@@ -67,13 +70,23 @@ module Bullring
       server.alive?
     end
     
+    class SetupProvider
+      include DRbUndumped
+
+      def initialize(wrapped_provider)
+        @wrapped_provider = wrapped_provider
+      end
+
+      def libraries
+        @wrapped_provider.libraries
+      end
+    end
+    
   private
     
     attr_accessor :server 
 
   end
-  
-
   
 end
 

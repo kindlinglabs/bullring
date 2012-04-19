@@ -22,6 +22,15 @@ module Bullring
       @logger = options[:logger] || DummyLogger.new
     end
     
+    def load_setup(setup_provider)
+      # Get the libraries from the setup provider and add them to our local list.
+      # Hopefully, by calling 'to_s' we are getting copies that live only on our
+      # side of DRb.
+      setup_provider.libraries.each do |library|
+        add_library(library.to_s)
+      end
+    end
+    
     def add_library(script)
       @library_scripts.push(script)
     end
