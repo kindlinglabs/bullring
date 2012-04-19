@@ -2,6 +2,13 @@
 
 # Usage: bullring_server.sh GEM_ROOT_DIR ARGS_FOR_RUBY_CALL
 
+BULLRING_ROOT=$1
+DAEMON_CMD=$2
+PORT=$3
+INIT_HEAP_SIZE=$4     # Xms, e.g. 128m
+MAX_HEAP_SIZE=$5      # Xmx, e.g. 128m
+YOUNG_HEAP_SIZE=$6    # Xmn, e.g. 92m
+
 # Load RVM into a shell session *as a function*
 if [[ -s "$HOME/.rvm/scripts/rvm" ]] ; then
 
@@ -33,4 +40,7 @@ GEM_PATH=
 RUBYOPT=
 BUNDLE_BIN_PATH=
 
-$ruby_bin -I $rhino_gem_dir/lib $1/bullring/workers/rhino_server.rb $2 $3 $4 $5 $6
+$ruby_bin -J-Xmn$YOUNG_HEAP_SIZE -J-Xms$INIT_HEAP_SIZE -J-Xmx$MAX_HEAP_SIZE \
+          -J-server \
+          -I $rhino_gem_dir/lib \
+          $BULLRING_ROOT/bullring/workers/rhino_server.rb $DAEMON_CMD $PORT

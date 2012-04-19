@@ -21,9 +21,12 @@ module Bullring
         :host => 'localhost',
         :port => Bullring.configuration.server_port,
         :command => File.join(Bullring.root, "/bullring/workers/rhino_server.sh"),
-        :args => ["#{Bullring.root}", 
+        :args => [Bullring.root, 
                   "start", 
-                  "#{Bullring.configuration.server_port}"]
+                  "#{Bullring.configuration.server_port}",
+                  Bullring.configuration.jvm_init_heap_size,
+                  Bullring.configuration.jvm_max_heap_size,
+                  Bullring.configuration.jvm_young_heap_size]
       }
       
       @server = DrubiedProcess.new(options)
