@@ -30,39 +30,40 @@ module Bullring
                   Bullring.configuration.jvm_max_heap_size,
                   Bullring.configuration.jvm_young_heap_size]
       }
-      
-      @libraries = []
+            
+      @libraries = {}
       
       @server = DrubiedProcess.new(options) do |process|
         process.configure({:run_timeout_secs => Bullring.configuration.execution_timeout_secs, 
                            :logger => Bullring.logger})
         process.load_setup(SetupProvider.new(self))
       end
-    end
+    end    
     
-    def add_library(script)
+    def add_library(name, script)
       # this guy needs to maintain the library scripts in case the server restarts, in which
       # case the server will request the libraries through the SetupProvider
-      @libraries.push(script)
+      rescue_me do
+        @libraries[name] = script
+        server.add_library(name, script)
+      end
     end
 
-    def add_library_file(filename)
+    def add_library_file(name, filename)
       raise NotYetImplemented
       # server.add_library_script(filename)
     end
 
     def check(script, options)
-      server.check(script, options)
+      rescue_me do 
+        server.check(script, options)
+      end
     end
 
     def run(script, options)
-      begin
+      rescue_me do
         result = server.run(script, options)
-        result.respond_to?(:to_h) ? result.to_h : result
-      rescue DRb::DRbUnknownError => e
-        raise e.unknown
-      rescue Bullring::JSError => e
-        raise e
+        result.respond_to?(:to_h) ? result.to_h : result      
       end
     end
 
@@ -83,6 +84,18 @@ module Bullring
     end
     
   private
+  
+    def rescue_me
+      begin
+        yield
+      rescue DRb::DRbConnError => e
+        Bullring.logger.error("Rescued a DRb connection error: " + e.inspect)
+        @server.restart_if_needed!
+        yield
+      rescue DRb::DRbUnknownError => e
+        raise e
+      end  
+    end
     
     attr_accessor :server 
 

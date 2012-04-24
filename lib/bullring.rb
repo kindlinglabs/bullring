@@ -1,5 +1,6 @@
 require 'bullring/version'
 require 'bullring/worker'
+require 'uglifier'
 
 module Bullring
   
@@ -8,13 +9,14 @@ module Bullring
     attr_accessor :logger
     
     # Order is important (and relative to calls to add_library)
-    def add_library_file(filename)
-      worker.add_library_file(filename)
+    def add_library_file(name, filename)
+      worker.add_library_file(name, filename)
     end
     
     # Order is important (and relative to calls to add_library_script)
-    def add_library(script)
-      worker.add_library(script)
+    def add_library(name, script)
+      script = Uglifier.compile(script, :copyright => false) if configuration.minify_libraries
+      worker.add_library(name, script)
     end
     
     def check(script, options = {})
@@ -65,6 +67,7 @@ module Bullring
       attr_accessor :jvm_init_heap_size
       attr_accessor :jvm_max_heap_size
       attr_accessor :jvm_young_heap_size
+      attr_accessor :minify_libraries
       
       def initialize      
         @execution_timeout_secs = 0.5
@@ -72,6 +75,7 @@ module Bullring
         @jvm_init_heap_size = '128m'
         @jvm_max_heap_size = '128m'
         @jvm_young_heap_size = '64m'
+        @minify_libraries = true
         super
       end
     end

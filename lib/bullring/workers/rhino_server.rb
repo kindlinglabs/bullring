@@ -7,7 +7,7 @@ module Bullring
   class RhinoServer
     
     def initialize
-      @library_scripts = []
+      @library_scripts = {}
       configure
     end
     
@@ -26,19 +26,21 @@ module Bullring
       # Get the libraries from the setup provider and add them to our local list.
       # Hopefully, by calling 'to_s' we are getting copies that live only on our
       # side of DRb.
-      setup_provider.libraries.each do |library|
-        add_library(library.to_s)
+      setup_provider.libraries.each do |name, script|
+        add_library(name.to_s, library.to_s)
       end
+      
+      @setup_provider = setup_provider
     end
     
-    def add_library(script)
-      @library_scripts.push(script)
+    def add_library(name, script)
+      @library_scripts[name] = script
     end
     
-    def add_library_file(filename)
+    def add_library_file(name, filename)
       raise NotYetImplemented
       script = read file into string
-      @library_scripts.push(script)
+      @library_scripts[name] = script
     end
     
     def check(script, options)
@@ -76,9 +78,15 @@ module Bullring
 
     def run(script, options)
       Rhino::Context.open(:sealed => @options[:run_is_sealed], :restrictable => @options[:run_is_restrictable]) do |context|
-        @library_scripts.each do |library| 
-          context_wrapper {context.eval(library)}      
+
+        (options['library_names'] || []).each do |library_name|
+          library_script = @library_scripts[library_name] || fetch_library_script!(library_name)
+          context_wrapper {context.eval(library_script)}      
         end
+        
+        # @library_scripts.each do |library| 
+        #   context_wrapper {context.eval(library)}      
+        # end
           
         context.timeout_limit = @options[:run_timeout_secs]
         
@@ -148,6 +156,14 @@ module Bullring
      # escape javascript characters (similar to Rails escape_javascript)
      source.gsub!(/(\\|\r\n|[\n\r"'])/u) {|match| ESCAPE_MAP[match] }
      source   
+    end
+    
+    # Goes back to the setup provider to the get the named script or throws an
+    # exception if there is no such script to retrieve.
+    def fetch_library_script!(name)
+      library_script = @setup_provider.libraries[name]
+      raise NameError.new("Client doesn't have script named #{name}") if library_script.nil?
+      add_library(name, library_script)
     end
     
   end
