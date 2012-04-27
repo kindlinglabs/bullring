@@ -49,12 +49,18 @@ module Bullring
     end
 
     def process_port_active?
-      Network::is_port_in_use?(@options[:process][:host],@options[:process][:port])
+      in_use = Network::is_port_in_use?(@options[:process][:host],@options[:process][:port])
+      Bullring.logger.debug {"#{caller_name}: Port #{port} on #{host} is #{in_use ? 'active' : 'inactive'}."}
+      in_use
     end
 
     # Creates a druby connection to the process, starting it up if necessary
     def connect_to_process!
+      Bullring.logger.debug{"#{caller_name}: Connecting to process..."}
+
       if !process_port_active?
+        Bullring.logger.debug {"#{caller_name}: Spawning process..."}
+
         Process.spawn([@options[:process][:command], @options[:process][:args]].flatten.join(" "))
 
         while (!process_port_active?)
@@ -62,11 +68,19 @@ module Bullring
         end
       end
 
-      DRb.start_service "druby://localhost:0"
+      local_service = DRb.start_service "druby://localhost:0"
+      Bullring.logger.debug {"#{caller_name}: Started local service on #{local_service.uri}"}
+
       @process = DRbObject.new nil, "druby://#{@options[:process][:host]}:#{@options[:process][:port]}"
       
       @after_connect_block.call(@process) if !@after_connect_block.nil?
     end
+    
+    protected
+    
+    def caller_name; @options[:caller_name]; end
+    def port; @options[:process][:port]; end
+    def host; @options[:process][:host]; end
   end
   
 end

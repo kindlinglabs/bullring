@@ -117,28 +117,28 @@ module Bullring
         result = yield
         duration = Time.now - start_time
         
-        @logger.debug("Ran script (#{duration} secs); result: " + result.inspect)
+        @logger.debug {"#{logname}: Ran script (#{duration} secs); result: " + result.inspect}
         
         return duration, result
       rescue Rhino::JSError => e
-        @logger.debug("JSError! Cause: " + e.cause + "; Message: " + e.message)
+        @logger.debug {"#{logname}: JSError! Cause: " + e.cause + "; Message: " + e.message}
         jsError = JSError.new
         jsError.cause = e.cause.to_s
         jsError.message = e.message.to_s
         jsError.backtrace = []
         raise jsError
       rescue Rhino::RunawayScriptError => e
-        @logger.debug("Runaway Script: " + e.inspect)
+        @logger.debug {"#{logname}: Runaway Script: " + e.inspect}
         jsError = JSError.new
         jsError.cause = "Script took too long to run"
         raise jsError
       rescue NameError => e
-        @logger.debug("Name error: " + e.inspect)
+        @logger.debug {"#{logname}: Name error: " + e.inspect}
       rescue Exception => e
-        @logger.debug("Exception: " + e.inspect)
+        @logger.debug {"#{logname}: Exception: " + e.inspect}
         raise e
       rescue Error => e
-        @logger.debug("Error: " + e.inspect)
+        @logger.debug {"#{logname}: Error: " + e.inspect}
         raise e
       end
     end
@@ -165,6 +165,8 @@ module Bullring
       raise NameError.new("Client doesn't have script named #{name}") if library_script.nil?
       add_library(name, library_script)
     end
+    
+    def logname; "Bullring Server"; end
     
   end
   

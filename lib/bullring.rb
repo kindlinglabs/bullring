@@ -6,7 +6,13 @@ module Bullring
   
   class << self
         
-    attr_accessor :logger
+    def logger=(logger)
+      @logger = logger
+    end
+    
+    def logger
+      @logger ||= DummyLogger.new
+    end
     
     # Order is important (and relative to calls to add_library)
     def add_library_file(name, filename)
@@ -93,6 +99,12 @@ module Bullring
       @worker
     end
     
+  end
+  
+  class DummyLogger
+    def method_missing(m, *args, &block)  
+      # ignore
+    end
   end
   
 end

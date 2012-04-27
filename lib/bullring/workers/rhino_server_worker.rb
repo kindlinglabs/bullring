@@ -19,6 +19,7 @@ module Bullring
       # If already using jruby, can also just use rhino directly
 
       options = {}
+      options[:caller_name] = "Bullring"
       options[:process] = {
         :host => 'localhost',
         :port => Bullring.configuration.server_port,
@@ -44,6 +45,7 @@ module Bullring
       # this guy needs to maintain the library scripts in case the server restarts, in which
       # case the server will request the libraries through the SetupProvider
       rescue_me do
+        Bullring.logger.debug { "Bullring: Adding library named '#{name}'" }
         @libraries[name] = script
         server.add_library(name, script)
       end
@@ -55,12 +57,14 @@ module Bullring
     end
 
     def check(script, options)
+      Bullring.logger.debug { "Bullring: Checking script with hash '#{script.hash}'" }
       rescue_me do 
         server.check(script, options)
       end
     end
 
     def run(script, options)
+      Bullring.logger.debug { "Bullring: Running script with hash '#{script.hash}'" }
       rescue_me do
         result = server.run(script, options)
         result.respond_to?(:to_h) ? result.to_h : result      
@@ -89,7 +93,7 @@ module Bullring
       begin
         yield
       rescue DRb::DRbConnError => e
-        Bullring.logger.error("Rescued a DRb connection error: " + e.inspect)
+        Bullring.logger.error {"Bullring: Rescued a DRb connection error: " + e.inspect}
         @server.restart_if_needed!
         yield
       rescue DRb::DRbUnknownError => e
