@@ -90,14 +90,25 @@ module Bullring
   private
   
     def rescue_me
+      @times_rescued = 0
       begin
         yield
       rescue DRb::DRbConnError => e
-        Bullring.logger.error {"Bullring: Rescued a DRb connection error: " + e.inspect}
-        @server.restart_if_needed!
-        yield
-      rescue DRb::DRbUnknownError => e
+        Bullring.logger.error {"Bullring: Encountered a DRb connection error: " + e.inspect}
+        
+        if (@times_rescued += 1) < 2
+          Bullring.logger.debug {"Bullring: Attempting to restart the server"}
+          @server.restart_if_needed!
+          retry
+        else
+          raise e
+        end
+      rescue Bullring::JSError => e
+        Bullring.logger.debug {"Bullring: Encountered a JSError: " + e.inspect}
         raise e
+      rescue DRb::DRbUnknownError => e
+        Bullring.logger.error {"Bullring: Caught an unknown DRb error: " + e.inspect}
+        raise e.unknown
       end  
     end
     

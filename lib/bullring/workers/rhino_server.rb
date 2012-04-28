@@ -12,20 +12,21 @@ module Bullring
     end
     
     def configure(options={})
+      @logger = options[:logger] || DummyLogger.new
+      
       @options ||= { :run_is_sealed => false,
                      :run_is_restrictable => true,
                      :run_timeout_secs => 0.5 }
 
       # Don't do a merge b/c jruby and ruby don't play nicely for some reason
       options.each{|k,v| @options[k] = v}
-      
-      @logger = options[:logger] || DummyLogger.new
     end
     
     def load_setup(setup_provider)
       # Get the libraries from the setup provider and add them to our local list.
       # Hopefully, by calling 'to_s' we are getting copies that live only on our
       # side of DRb.
+      
       setup_provider.libraries.each do |name, script|
         add_library(name.to_s, library.to_s)
       end
@@ -83,10 +84,6 @@ module Bullring
           library_script = @library_scripts[library_name] || fetch_library_script!(library_name)
           context_wrapper {context.eval(library_script)}      
         end
-        
-        # @library_scripts.each do |library| 
-        #   context_wrapper {context.eval(library)}      
-        # end
           
         context.timeout_limit = @options[:run_timeout_secs]
         
@@ -122,24 +119,15 @@ module Bullring
         return duration, result
       rescue Rhino::JSError => e
         @logger.debug {"#{logname}: JSError! Cause: " + e.cause + "; Message: " + e.message}
-        jsError = JSError.new
-        jsError.cause = e.cause.to_s
-        jsError.message = e.message.to_s
-        jsError.backtrace = []
-        raise jsError
-      rescue Rhino::RunawayScriptError => e
+        raise Bullring::JSError, e.message.to_s, caller
+      rescue Rhino::RunawayScriptError, Rhino::ScriptTimeoutError => e
         @logger.debug {"#{logname}: Runaway Script: " + e.inspect}
-        jsError = JSError.new
-        jsError.cause = "Script took too long to run"
-        raise jsError
+        raise Bullring::JSError, "Script took too long to run", caller
       rescue NameError => e
         @logger.debug {"#{logname}: Name error: " + e.inspect}
-      rescue Exception => e
-        @logger.debug {"#{logname}: Exception: " + e.inspect}
-        raise e
-      rescue Error => e
-        @logger.debug {"#{logname}: Error: " + e.inspect}
-        raise e
+      rescue StandardError => e
+        @logger.debug {"#{logname}: StandardError: " + e.inspect}
+        raise
       end
     end
 
@@ -170,11 +158,7 @@ module Bullring
     
   end
   
-  class JSError < StandardError
-    attr_accessor :cause
-    attr_accessor :backtrace
-    attr_accessor :message
-  end
+  class JSError < StandardError; end
   
   class DummyLogger
     def method_missing(m, *args, &block)  
