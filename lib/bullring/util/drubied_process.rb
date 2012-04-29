@@ -49,7 +49,7 @@ module Bullring
     end
 
     def process_port_active?
-      in_use = Network::is_port_in_use?(@options[:process][:host],@options[:process][:port])
+      in_use = Network::is_port_in_use?(host,port)
       Bullring.logger.debug {"#{caller_name}: Port #{port} on #{host} is #{in_use ? 'active' : 'inactive'}."}
       in_use
     end
@@ -61,17 +61,29 @@ module Bullring
       if !process_port_active?
         Bullring.logger.debug {"#{caller_name}: Spawning process..."}
 
-        Process.spawn([@options[:process][:command], @options[:process][:args]].flatten.join(" "))
+        # Spawn the process in its own process group so it stays alive even if this process dies
+        pid = Process.spawn([@options[:process][:command], @options[:process][:args]].flatten.join(" "), {:pgroup => true})
+        Process.detach(pid)
 
+        time_sleeping = 0
         while (!process_port_active?)
           sleep(0.2)
+          if (time_sleeping += 0.2) > @options[:process][:max_bringup_time]
+            Bullring.logger.error {"#{caller_name}: Timed out waiting to bring up the process"}
+            raise StandardError, "#{caller_name}: Timed out waiting to bring up the process", caller
+          end
         end
       end
 
-      local_service = DRb.start_service "druby://localhost:0"
-      Bullring.logger.debug {"#{caller_name}: Started local service on #{local_service.uri}"}
+      if !@local_service.nil?
+        @local_service.stop_service
+        Bullring.logger.debug {"#{caller_name}: Stopped local service on #{@local_service.uri}"}
+      end
+      
+      @local_service = DRb.start_service "druby://localhost:0"
+      Bullring.logger.debug {"#{caller_name}: Started local service on #{@local_service.uri}"}
 
-      @process = DRbObject.new nil, "druby://#{@options[:process][:host]}:#{@options[:process][:port]}"
+      @process = DRbObject.new nil, "druby://#{host}:#{port}"
       
       @after_connect_block.call(@process) if !@after_connect_block.nil?
     end

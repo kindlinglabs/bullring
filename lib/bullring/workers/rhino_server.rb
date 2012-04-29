@@ -8,7 +8,9 @@ module Bullring
     
     def initialize
       @library_scripts = {}
+      @setup_providers = []
       configure
+      @logger.info {"#{logname}: Started a RhinoServer instance at #{Time.now}"}
     end
     
     def configure(options={})
@@ -25,13 +27,15 @@ module Bullring
     def load_setup(setup_provider)
       # Get the libraries from the setup provider and add them to our local list.
       # Hopefully, by calling 'to_s' we are getting copies that live only on our
-      # side of DRb.
+      # side of DRb.  Store the provider so we can go back to it later if we 
+      # find that we don't have a required library.  Use a list of providers b/c
+      # some providers may have died off.
       
       setup_provider.libraries.each do |name, script|
         add_library(name.to_s, library.to_s)
       end
       
-      @setup_provider = setup_provider
+      @setup_providers.push(setup_provider)
     end
     
     def add_library(name, script)
@@ -149,8 +153,24 @@ module Bullring
     # Goes back to the setup provider to the get the named script or throws an
     # exception if there is no such script to retrieve.
     def fetch_library_script!(name)
-      library_script = @setup_provider.libraries[name]
-      raise NameError.new("Client doesn't have script named #{name}") if library_script.nil?
+
+      while (provider = @setup_providers.last)
+        begin
+          library_script = provider.libraries[name]
+          break if !library_script.nil?
+        rescue DRb::DRbConnError => e
+          @logger.debug {"#{logname}: Could not connect to setup provider (its process probably died): " + e.inspect}
+        rescue StandardError => e
+          @logger.error {"#{logname}: Encountered an unknown error searching setup providers for a script named #{name}: " + e.inspect}
+        ensure
+          # Toss the last element so we can continue searching prior elements
+          @setup_providers.pop
+        end
+      end
+
+      # If after looking through the providers we are still empty handed, raise an error
+      raise NameError, "Client doesn't have script named #{name}", caller if library_script.nil?
+      
       add_library(name, library_script)
     end
     

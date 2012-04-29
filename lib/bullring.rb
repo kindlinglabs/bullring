@@ -74,6 +74,7 @@ module Bullring
       attr_accessor :jvm_max_heap_size
       attr_accessor :jvm_young_heap_size
       attr_accessor :minify_libraries
+      attr_accessor :server_max_bringup_time
       
       def initialize      
         @execution_timeout_secs = 0.5
@@ -82,6 +83,7 @@ module Bullring
         @jvm_max_heap_size = '128m'
         @jvm_young_heap_size = '64m'
         @minify_libraries = true
+        @server_max_bringup_time = 20 #seconds
         super
       end
     end

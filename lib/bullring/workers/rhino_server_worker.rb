@@ -29,7 +29,8 @@ module Bullring
                   "#{Bullring.configuration.server_port}",
                   Bullring.configuration.jvm_init_heap_size,
                   Bullring.configuration.jvm_max_heap_size,
-                  Bullring.configuration.jvm_young_heap_size]
+                  Bullring.configuration.jvm_young_heap_size],
+        :max_bringup_time => Bullring.configuration.server_max_bringup_time
       }
             
       @libraries = {}
