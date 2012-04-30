@@ -36,8 +36,7 @@ module Bullring
       @libraries = {}
       
       @server = DrubiedProcess.new(options) do |process|
-        process.configure({:run_timeout_secs => Bullring.configuration.execution_timeout_secs, 
-                           :logger => Bullring.logger})
+        process.configure({:run_timeout_secs => Bullring.configuration.execution_timeout_secs})
         process.load_setup(SetupProvider.new(self))
       end
     end    

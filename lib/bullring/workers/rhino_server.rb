@@ -4,18 +4,24 @@ require 'logger'
 
 module Bullring
 
+  class DummyLogger
+    def method_missing(m, *args, &block)  
+      # ignore
+    end
+  end
+
   class RhinoServer
+    
+    @@dummy_logger = Bullring::DummyLogger.new
     
     def initialize
       @library_scripts = {}
       @setup_providers = []
       configure
-      @logger.info {"#{logname}: Started a RhinoServer instance at #{Time.now}"}
+      logger.info {"#{logname}: Started a RhinoServer instance at #{Time.now}"}
     end
     
     def configure(options={})
-      @logger = options[:logger] || DummyLogger.new
-      
       @options ||= { :run_is_sealed => false,
                      :run_is_restrictable => true,
                      :run_timeout_secs => 0.5 }
@@ -38,6 +44,14 @@ module Bullring
       @setup_providers.push(setup_provider)
     end
     
+    def logger=(logger)
+      @logger = logger
+    end
+    
+    def logger
+      @logger || @@dummy_logger
+    end
+        
     def add_library(name, script)
       @library_scripts[name] = script
     end
@@ -118,19 +132,19 @@ module Bullring
         result = yield
         duration = Time.now - start_time
         
-        @logger.debug {"#{logname}: Ran script (#{duration} secs); result: " + result.inspect}
+        logger.debug {"#{logname}: Ran script (#{duration} secs); result: " + result.inspect}
         
         return duration, result
       rescue Rhino::JSError => e
-        @logger.debug {"#{logname}: JSError! Cause: " + e.cause + "; Message: " + e.message}
+        logger.debug {"#{logname}: JSError! Cause: " + e.cause + "; Message: " + e.message}
         raise Bullring::JSError, e.message.to_s, caller
       rescue Rhino::RunawayScriptError, Rhino::ScriptTimeoutError => e
-        @logger.debug {"#{logname}: Runaway Script: " + e.inspect}
+        logger.debug {"#{logname}: Runaway Script: " + e.inspect}
         raise Bullring::JSError, "Script took too long to run", caller
       rescue NameError => e
-        @logger.debug {"#{logname}: Name error: " + e.inspect}
+        logger.debug {"#{logname}: Name error: " + e.inspect}
       rescue StandardError => e
-        @logger.debug {"#{logname}: StandardError: " + e.inspect}
+        logger.debug {"#{logname}: StandardError: " + e.inspect}
         raise
       end
     end
@@ -153,19 +167,19 @@ module Bullring
     # Goes back to the setup provider to the get the named script or throws an
     # exception if there is no such script to retrieve.
     def fetch_library_script!(name)
-      @logger.debug {"#{logname}: The script named #{name} was not available so trying to fetch from clients"}
+      logger.debug {"#{logname}: The script named #{name} was not available so trying to fetch from clients"}
 
       while (provider = @setup_providers.last)
         begin
           library_script = provider.libraries[name]
           break if !library_script.nil?
         rescue DRb::DRbConnError => e
-          @logger.debug {"#{logname}: Could not connect to setup provider (its process probably died): " + e.inspect}
+          logger.debug {"#{logname}: Could not connect to setup provider (its process probably died): " + e.inspect}
         rescue StandardError => e
-          @logger.error {"#{logname}: Encountered an unknown error searching setup providers for a script named #{name}: " + e.inspect}
+          logger.error {"#{logname}: Encountered an unknown error searching setup providers for a script named #{name}: " + e.inspect}
         ensure
           # Toss the last element so we can continue searching prior elements
-          @setup_providers.pop
+          setup_providers.pop
         end
       end
 
@@ -180,12 +194,6 @@ module Bullring
   end
   
   class JSError < StandardError; end
-  
-  class DummyLogger
-    def method_missing(m, *args, &block)  
-      # ignore
-    end
-  end
   
 end
 

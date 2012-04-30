@@ -51,7 +51,12 @@ module Bullring
 
     def method_missing(m, *args, &block)  
       restart_if_needed!
-      @process.send(m, *args, &block)
+
+      @process.logger = Bullring.logger
+      result = @process.send(m, *args, &block)
+      @process.logger = nil
+
+      result
     end
 
     def process_port_active?
