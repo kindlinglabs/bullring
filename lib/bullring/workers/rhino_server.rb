@@ -153,6 +153,7 @@ module Bullring
     # Goes back to the setup provider to the get the named script or throws an
     # exception if there is no such script to retrieve.
     def fetch_library_script!(name)
+      @logger.debug {"#{logname}: The script named #{name} was not available so trying to fetch from clients"}
 
       while (provider = @setup_providers.last)
         begin

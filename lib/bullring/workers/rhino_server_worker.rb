@@ -95,10 +95,10 @@ module Bullring
       begin
         yield
       rescue DRb::DRbConnError => e
-        Bullring.logger.error {"Bullring: Encountered a DRb connection error: " + e.inspect}
+        Bullring.logger.error {"Bullring: Encountered a DRb connection error at time #{Time.now}: " + e.inspect}
         
         if (@times_rescued += 1) < 2
-          Bullring.logger.debug {"Bullring: Attempting to restart the server"}
+          Bullring.logger.debug {"Bullring: Attempting to restart the server at time #{Time.now}"}
           @server.restart_if_needed!
           retry
         else

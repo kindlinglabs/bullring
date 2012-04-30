@@ -31,15 +31,21 @@ module Bullring
 
     def alive?
       begin
-        @process.nil? || @process.alive?
-      rescue DRb::DRbConnError
+        (@process.nil? || @process.alive?).tap{|is_alive| Bullring.logger.debug {"#{caller_name} #{is_alive ? 'is alive!' : 'is not alive!'}"}}
+      rescue DRb::DRbConnError => e
+        Bullring.logger.debug {"#{caller_name}: Checking if server alive and got a connection error: " + e.inspect}
         return false
-      rescue # things like name errors, in case server doesn't have an alive? method
+      rescue StandardError => e # things like name errors, in case server doesn't have an alive? method
+        Bullring.logger.debug {"#{caller_name}: Checking if server alive and got an error: " + e.inspect}
+        true
+      rescue
+        Bullring.logger.debug {"#{caller_name}: Checking if server alive and got an unknown error"}
         true
       end
     end
 
     def restart_if_needed!
+      Bullring.logger.debug {"#{caller_name}: In restart_if_needed!"}
       alive? || connect_to_process!
     end
 
