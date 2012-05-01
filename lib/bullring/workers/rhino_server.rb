@@ -91,7 +91,8 @@ module Bullring
         RHINO_CALL
         
         duration, result = context_wrapper {context.eval(jslintCall + "JSLINT.errors")}
-        result
+        
+        result = result.collect{|obj| obj.respond_to?(:to_h) ? obj.to_h : obj}
       end      
     end
 
@@ -106,7 +107,7 @@ module Bullring
         context.timeout_limit = @options[:run_timeout_secs]
         
         duration, result = context_wrapper {context.eval(script)}      
-        result
+        result.respond_to?(:to_h) ? result.to_h : result      
       end      
     end
     

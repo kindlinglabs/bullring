@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    bullring (0.7.2)
+    bullring (0.7.3)
       execjs
       therubyracer
       therubyrhino
