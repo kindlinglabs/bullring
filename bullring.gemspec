@@ -19,6 +19,8 @@ Gem::Specification.new do |s|
   s.platform = $platform || RUBY_PLATFORM[/java/] || 'ruby'
 
   s.add_dependency "uglifier"
+  s.add_dependency "execjs"
+  s.add_dependency "therubyracer"
   s.add_dependency "therubyrhino"
 
   s.add_development_dependency "sqlite3"

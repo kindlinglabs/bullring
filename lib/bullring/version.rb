@@ -1,3 +1,3 @@
 module Bullring
-  VERSION = "0.7.2.alpha"
+  VERSION = "0.7.2"
 end

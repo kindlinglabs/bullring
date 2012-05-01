@@ -1,7 +1,9 @@
 PATH
   remote: .
   specs:
-    bullring (0.7.1)
+    bullring (0.7.2)
+      execjs
+      therubyracer
       therubyrhino
       uglifier
 
@@ -50,6 +52,7 @@ GEM
       thor (~> 0.14)
     json (1.6.6)
     json (1.6.6-java)
+    libv8 (3.3.10.4)
     linecache19 (0.5.12)
       ruby_core_source (>= 0.1.4)
     mail (2.4.4)
@@ -100,6 +103,8 @@ GEM
       tilt (~> 1.1, != 1.3.0)
     sqlite3 (1.3.5)
     test-unit (2.4.8)
+    therubyracer (0.10.1)
+      libv8 (~> 3.3.10)
     therubyrhino (1.73.2)
     thor (0.14.6)
     tilt (1.3.3)
