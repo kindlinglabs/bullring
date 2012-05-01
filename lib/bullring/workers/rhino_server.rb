@@ -120,7 +120,7 @@ module Bullring
     end
     
     def self.start(myPort, clientPort)
-      DRb.start_service "druby://localhost:#{myPort}", Bullring::RhinoServer.new
+      DRb.start_service "druby://127.0.0.1:#{myPort}", Bullring::RhinoServer.new
       DRb.thread.join
     end
     

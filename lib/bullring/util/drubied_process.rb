@@ -91,7 +91,7 @@ module Bullring
         Bullring.logger.debug {"#{caller_name}: Stopped local service on #{@local_service.uri}"}
       end
       
-      @local_service = DRb.start_service "druby://localhost:0"
+      @local_service = DRb.start_service "druby://127.0.0.1:0"
       Bullring.logger.debug {"#{caller_name}: Started local service on #{@local_service.uri}"}
 
       @process = DRbObject.new nil, "druby://#{host}:#{port}"
