@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Usage: bullring_server.sh GEM_ROOT_DIR ARGS_FOR_RUBY_CALL
 
