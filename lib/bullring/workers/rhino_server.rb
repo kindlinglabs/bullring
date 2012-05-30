@@ -2,17 +2,28 @@ require 'rhino'
 require 'drb'
 require 'logger'
 
-module Bullring
-
-  class DummyLogger
-    def method_missing(m, *args, &block)  
-      # ignore
+unless Kernel.respond_to?(:require_relative)
+  module Kernel
+    def require_relative(path)
+      require File.join(File.dirname(caller[0]), path.to_str)
     end
   end
+end
+
+require_relative 'common'
+require_relative '../util/dummy_logger'
+
+module Bullring
+
+  # class DummyLogger
+  #   def method_missing(m, *args, &block)  
+  #     # ignore
+  #   end
+  # end
 
   class RhinoServer
     
-    @@dummy_logger = Bullring::DummyLogger.new
+    # @@dummy_logger = Bullring::DummyLogger.new
     
     def initialize
       @library_scripts = {}
@@ -49,7 +60,7 @@ module Bullring
     end
     
     def logger
-      @logger || @@dummy_logger
+      @logger ||= Bullring::DummyLogger.new
     end
         
     def add_library(name, script)
@@ -66,31 +77,9 @@ module Bullring
       Rhino::Context.open do |context|
         context_wrapper {context.load(File.expand_path("../../js/jslint.min.js", __FILE__))}
         
-        jslintCall = <<-RHINO_CALL
-          JSLINT("#{prepare_source(script)}", {devel: false, 
-                               bitwise: true, 
-                               undef: true,
-                               continue: true, 
-                               unparam: true, 
-                               debug: true, 
-                               sloppy: true, 
-                               eqeq: true, 
-                               sub: true, 
-                               es5: true, 
-                               vars: true, 
-                               evil: true, 
-                               white: true, 
-                               forin: true, 
-                               passfail: false, 
-                               newcap: true, 
-                               nomen: true, 
-                               plusplus: true, 
-                               regexp: true, 
-                               maxerr: 50, 
-                               indent: 4});
-        RHINO_CALL
+        call = Bullring::Helper::jslint_call(script)
         
-        duration, result = context_wrapper {context.eval(jslintCall + "JSLINT.errors")}
+        duration, result = context_wrapper {context.eval(call)}
         
         result = result.collect{|obj| obj.respond_to?(:to_h) ? obj.to_h : obj}
       end      
@@ -149,21 +138,6 @@ module Bullring
         raise
       end
     end
-
-    ESCAPE_MAP = {
-      '\\' => '\\\\', 
-      "\r\n" => '\n', 
-      "\n" => '\n', 
-      "\r" => '\n', 
-      '"' => '\"', 
-      "'" => '\''
-    }
-          
-    def prepare_source(source) 
-     # escape javascript characters (similar to Rails escape_javascript)
-     source.gsub!(/(\\|\r\n|[\n\r"'])/u) {|match| ESCAPE_MAP[match] }
-     source   
-    end
     
     # Goes back to the setup provider to the get the named script or throws an
     # exception if there is no such script to retrieve.
@@ -190,7 +164,7 @@ module Bullring
       add_library(name, library_script)
     end
     
-    def logname; "Bullring Server"; end
+    def logname; "Bullring (Rhino Server)"; end
     
   end
   

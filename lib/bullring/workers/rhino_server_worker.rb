@@ -3,21 +3,10 @@ require 'bullring/util/drubied_process'
 module Bullring
 
   class RhinoServerWorker < Bullring::Worker
-    
-    attr_reader :libraries
-    
-    def discard
-      # Daemons.run(server_command, stop_options) 
-      # @server.kill if !@server.nil?
-      # DRb.stop_service 
-      # @server = nil
-    end
-    
+        
     def initialize
-      # TODO add development environment switch here so that developers
-      # can just use therubyracer (or rhino or whatever) directly
-      # If already using jruby, can also just use rhino directly
-
+      super
+      
       options = {}
       options[:caller_name] = "Bullring"
       options[:process] = {
@@ -32,8 +21,6 @@ module Bullring
                   Bullring.configuration.jvm_young_heap_size],
         :max_bringup_time => Bullring.configuration.server_max_bringup_time
       }
-            
-      @libraries = {}
       
       @server = DrubiedProcess.new(options) do |process|
         process.configure({:run_timeout_secs => Bullring.configuration.execution_timeout_secs})
@@ -41,39 +28,33 @@ module Bullring
       end
     end    
     
-    def add_library(name, script)
-      # this guy needs to maintain the library scripts in case the server restarts, in which
-      # case the server will request the libraries through the SetupProvider
+    def _add_library(name, script)
       rescue_me do
-        Bullring.logger.debug { "Bullring: Adding library named '#{name}'" }
-        @libraries[name] = script
         server.add_library(name, script)
       end
     end
 
-    def add_library_file(name, filename)
-      raise NotYetImplemented
-      # server.add_library_script(filename)
-    end
-
-    def check(script, options)
-      Bullring.logger.debug { "Bullring: Checking script with hash '#{script.hash}'" }
+    def _check(script, options)
       rescue_me do 
         server.check(script, options)
       end
     end
 
-    def run(script, options)
-      Bullring.logger.debug { "Bullring: Running script with hash '#{script.hash}'" }
+    def _run(script, options)
       rescue_me do
         result = server.run(script, options)
         result.respond_to?(:to_h) ? result.to_h : result      
       end
     end
 
-    def alive?
+    def _alive?
       server.alive?
     end
+    
+    def _discard;  end
+    
+    # The SetupProvider gives a way for the server to pull all the libraries in case 
+    # of restart
     
     class SetupProvider
       include DRbUndumped

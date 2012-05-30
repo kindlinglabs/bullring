@@ -9,6 +9,13 @@ if false
 end
 
 class BullringTest < Test::Unit::TestCase #ActiveSupport::TestCase
+  
+  def setup
+    Bullring.configure do |config|
+      config.use_rhino = false
+    end
+  end
+  
   test "truth" do
     assert_kind_of Module, Bullring
   end
@@ -19,6 +26,7 @@ class BullringTest < Test::Unit::TestCase #ActiveSupport::TestCase
   
   test "run multiline" do
     assert_nothing_raised do 
+      # debugger
       result = Bullring.run("3;\r\n4")
       assert_equal 4, result
     end

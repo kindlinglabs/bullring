@@ -1,5 +1,7 @@
 require 'bullring/version'
 require 'bullring/worker'
+require 'bullring/util/dummy_logger'
+require 'bullring/workers/common'
 require 'uglifier'
 
 module Bullring
@@ -12,11 +14,6 @@ module Bullring
     
     def logger
       @logger ||= DummyLogger.new
-    end
-    
-    # Order is important (and relative to calls to add_library)
-    def add_library_file(name, filename)
-      worker.add_library_file(name, filename)
     end
     
     # Order is important (and relative to calls to add_library_script)
@@ -75,6 +72,7 @@ module Bullring
       attr_accessor :jvm_young_heap_size
       attr_accessor :minify_libraries
       attr_accessor :server_max_bringup_time
+      attr_accessor :use_rhino
       
       def initialize      
         @execution_timeout_secs = 0.5
@@ -84,29 +82,17 @@ module Bullring
         @jvm_young_heap_size = '64m'
         @minify_libraries = true
         @server_max_bringup_time = 20 #seconds
+        @use_rhino = true
         super
       end
     end
     
   private
     
-    attr_accessor :worker 
-    
     def worker
-      if @worker.nil?
-        # TODO here, choose the appropriate worker (may be a non-server one for dev)
-        @worker = RhinoServerWorker.new
-      end
-      
-      @worker
+      @worker ||= configuration.use_rhino ? RhinoServerWorker.new : RacerWorker.new
     end
     
   end
-  
-  class DummyLogger
-    def method_missing(m, *args, &block)  
-      # ignore
-    end
-  end
-  
+    
 end

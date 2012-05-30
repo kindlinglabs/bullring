@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency "uglifier"
   s.add_dependency "execjs"
-  s.add_dependency "therubyracer"
+  s.add_dependency "therubyracer" #, :git => 'git://github.com/cykod/therubyracer.git'
   s.add_dependency "therubyrhino"
 
   s.add_development_dependency "sqlite3"

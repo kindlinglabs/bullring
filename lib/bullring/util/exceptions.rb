@@ -7,6 +7,5 @@ module Bullring
   class IllegalArgument < StandardError; end
   class IllegalState < StandardError; end
   class PidDirUnavailable < StandardError; end
-  class JSError < StandardError; end
   
 end
