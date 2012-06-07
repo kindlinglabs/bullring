@@ -1,4 +1,3 @@
-
 module Bullring
 
   class RacerWorker < Bullring::Worker
@@ -25,6 +24,8 @@ module Bullring
         library = libraries[library_name]
         context_wrapper {context.eval(library)}      
       end
+
+      # context.timeout = Bullring.configuration.execution_timeout_secs * 1000
       
       duration, result = context_wrapper {context.eval(script)}      
       result = result.respond_to?(:to_h) ? result.to_h : result      
@@ -40,19 +41,24 @@ module Bullring
 
     def context_wrapper
       begin 
+
+
         start_time = Time.now
         result = yield
         duration = Time.now - start_time
 
         Bullring.logger.debug {"#{logname}: Ran script (#{duration} secs); result: " + result.inspect}
 
-        return duration, result
+        return duration, result            
+        
       rescue V8::JSError => e
         Bullring.logger.debug {"#{logname}: JSError! Cause: " + e.cause + "; Message: " + e.message}
         raise Bullring::JSError, e.message.to_s, caller
       # rescue Rhino::RunawayScriptError, Rhino::ScriptTimeoutError => e
       #   logger.debug {"#{logname}: Runaway Script: " + e.inspect}
       #   raise Bullring::JSError, "Script took too long to run", caller
+      # rescue Timeout::Error => e
+      #   Bullring.logger.error {"#{logname}: Runaway script: #{e.inspect}"}
       rescue NameError => e
         Bullring.logger.debug {"#{logname}: Name error: " + e.inspect}
       rescue StandardError => e
