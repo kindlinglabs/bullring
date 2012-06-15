@@ -27,6 +27,7 @@ module Bullring
       if registry_unavailable?
         pid = Kernel.fork do
           @tuplespace = Rinda::TupleSpaceProxy.new(Rinda::TupleSpace.new)
+          @tuplespace.write([:global_lock])
           DRb.start_service registry_uri, @tuplespace
           DRb.thread.join
         end
@@ -78,7 +79,27 @@ module Bullring
     end
     
     def dump_tuplespace
-      puts @tuplespace.read_all(['available', nil]).inspect + @tuplespace.read_all(['leased', nil, nil]).inspect
+      @tuplespace.read_all(['available', nil]).inspect + @tuplespace.read_all(['leased', nil, nil]).inspect
+    end
+    
+    def store_unique_data(type, name, data)
+      @tuplespace.take([type, name, nil], 0)
+    end
+    
+    def []=(dictionary, key, value)
+      lock = @tuplespace.take([:global_lock])
+      @tuplespace.take([dictionary, key, nil], 0) rescue nil
+      @tuplespace.write([dictionary, key, value])
+    ensure
+      @tuplespace.write(lock) if lock
+    end
+    
+    def [](dictionary, key)
+      lock = @tuplespace.take([:global_lock])
+      _, _, value = @tuplespace.read([dictionary, key, nil], 0) rescue nil
+      return value
+    ensure
+      @tuplespace.write(lock) if lock
     end
     
     def servers_are_registered?

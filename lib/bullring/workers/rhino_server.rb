@@ -30,14 +30,14 @@ module Bullring
                            :run_timeout_secs => 0.5 }
       
       # Connect to the server registry
-      server_registry = ServerRegistry.new("127.0.0.1","2999")
+      @server_registry = ServerRegistry.new("127.0.0.1","2999")
       
       # Start up as a DRb server
       DRb.start_service uri, self
       
       puts "about to register server #{uri}"
       # Put ourselves on the registry
-      server_registry.register_server(uri)
+      @server_registry.register_server(uri)
       puts 'finished register server'
       
       logger.info {"#{logname}: Started a RhinoServer instance at #{Time.now}"}
@@ -76,8 +76,37 @@ module Bullring
       @logger ||= Bullring::DummyLogger.new
     end
         
-    def add_library(name, script)
-      @library_scripts[name] = script
+    # def add_library(name, script)
+    #   @library_scripts[name] = script
+    # end
+    
+    def get_library(name)
+      @library_cache[name] ||= fetch_library(name)
+      
+      # if @library_scripts[name].nil?
+      #         logger.debug {"#{logname}: The script named #{name} was not available so trying to fetch from the registry"}
+      # 
+      #         library_script = @server_registry['library', name]
+      # 
+      #         # while (provider = @setup_providers.last)
+      #         #   begin
+      #         #     library_script = provider.libraries[name]
+      #         #     break if !library_script.nil?
+      #         #   rescue DRb::DRbConnError => e
+      #         #     logger.debug {"#{logname}: Could not connect to setup provider (its process probably died): " + e.inspect}
+      #         #   rescue StandardError => e
+      #         #     logger.error {"#{logname}: Encountered an unknown error searching setup providers for a script named #{name}: " + e.inspect}
+      #         #   ensure
+      #         #     # Toss the last element so we can continue searching prior elements
+      #         #     setup_providers.pop
+      #         #   end
+      #         # end
+      # 
+      #         # If after looking through the providers we are still empty handed, raise an error
+      #         raise NameError, "Server cannot find a script named #{name}", caller if library_script.nil?
+      # 
+      #         add_library(name, library_script)
+      #     end
     end
     
     def check(script, options)
@@ -100,7 +129,7 @@ module Bullring
       Rhino::Context.open(:sealed => options[:run_is_sealed], :restrictable => options[:run_is_restrictable]) do |context|
 
         (options['library_names'] || []).each do |library_name|
-          library_script = @library_scripts[library_name] || fetch_library_script!(library_name)
+          library_script = get_library(library_name)#@library_scripts[library_name] || fetch_library_script!(library_name)
           context_wrapper {context.eval(library_script)}      
         end
           
@@ -153,27 +182,29 @@ module Bullring
     
     # Goes back to the setup provider to the get the named script or throws an
     # exception if there is no such script to retrieve.
-    def fetch_library_script!(name)
+    def fetch_library(name)
       logger.debug {"#{logname}: The script named #{name} was not available so trying to fetch from clients"}
 
-      while (provider = @setup_providers.last)
-        begin
-          library_script = provider.libraries[name]
-          break if !library_script.nil?
-        rescue DRb::DRbConnError => e
-          logger.debug {"#{logname}: Could not connect to setup provider (its process probably died): " + e.inspect}
-        rescue StandardError => e
-          logger.error {"#{logname}: Encountered an unknown error searching setup providers for a script named #{name}: " + e.inspect}
-        ensure
-          # Toss the last element so we can continue searching prior elements
-          setup_providers.pop
-        end
-      end
+      library_script = @server_registry['library', name]
+      
+      # while (provider = @setup_providers.last)
+      #   begin
+      #     library_script = provider.libraries[name]
+      #     break if !library_script.nil?
+      #   rescue DRb::DRbConnError => e
+      #     logger.debug {"#{logname}: Could not connect to setup provider (its process probably died): " + e.inspect}
+      #   rescue StandardError => e
+      #     logger.error {"#{logname}: Encountered an unknown error searching setup providers for a script named #{name}: " + e.inspect}
+      #   ensure
+      #     # Toss the last element so we can continue searching prior elements
+      #     setup_providers.pop
+      #   end
+      # end
 
       # If after looking through the providers we are still empty handed, raise an error
-      raise NameError, "Client doesn't have script named #{name}", caller if library_script.nil?
+      raise NameError, "Server cannot find a script named #{name}", caller if library_script.nil?
       
-      add_library(name, library_script)
+      # add_library(name, library_script)
     end
     
     def logname; "Bullring (Rhino Server)"; end

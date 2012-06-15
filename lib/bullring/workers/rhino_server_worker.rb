@@ -41,13 +41,11 @@ module Bullring
     
     def _add_library(name, script)
       rescue_me do
-        server.add_library(name, script)
+        server.store_in_registry('library', name, script)
       end
     end
 
     def _check(script, options)
-      options[:setup_provider] ||= @setup_provider
-      
       rescue_me do 
         server.check(script, options)
       end
@@ -55,10 +53,8 @@ module Bullring
 
     def _run(script, options)
       options[:run_timeout_secs] ||= Bullring.configuration.execution_timeout_secs
-      # options[:setup_provider] ||= @setup_provider
       
       rescue_me do
-        debugger
         result = server.run(script, options)
         result.respond_to?(:to_h) ? result.to_h : result      
       end

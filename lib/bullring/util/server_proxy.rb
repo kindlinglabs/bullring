@@ -30,6 +30,10 @@ module Bullring
       # connect_to_process!
       @server_registry = ServerRegistry.new("127.0.0.1","2999")
     end
+    
+    def store_in_registry(dictionary, key, value)
+      @server_registry[dictionary, key] = value
+    end
 
     def alive?
       @server_registry.servers_are_registered?
