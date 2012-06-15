@@ -58,12 +58,12 @@ module Bullring
         
     def lease_server(client_id)
       ignore, uri = @tuplespace.take(['available', nil])
-      puts "took available server"
+      # puts "took available server"
       @tuplespace.write(['leased', client_id, uri])
-      puts "noted that server as leased to client #{client_id}"
+      # puts "noted that server as leased to client #{client_id}"
       @servers[uri] ||= DRbObject.new nil, uri
-      puts "made a new DRb object (#{@servers[uri]})for that server and will return it next"
-      dump_tuplespace
+      # puts "made a new DRb object (#{@servers[uri]})for that server and will return it next"
+      # dump_tuplespace
       @servers[uri]
     end
     
@@ -74,7 +74,7 @@ module Bullring
     end
     
     def register_server(uri)
-      puts "in register server #{uri}"
+      # puts "in register server #{uri}"
       @tuplespace.write(['available', uri])
     end
     

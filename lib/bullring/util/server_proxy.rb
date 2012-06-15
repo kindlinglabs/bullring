@@ -60,19 +60,19 @@ module Bullring
     def method_missing(m, *args, &block)  
       restart_if_needed!
       
-      puts "about to lease server to run method #{m}"
+      # puts "about to lease server to run method #{m}"
       server = @server_registry.lease_server(0) # TODO fix me
-      puts "leased server #{server}"
+      # puts "leased server #{server}"
 
       server.logger = Bullring.logger
-      puts "set logger on server #{server}"
+      # puts "set logger on server #{server}"
       result = server.send(m, *args, &block)
-      puts "ran method #{m} on server #{server}"
+      # puts "ran method #{m} on server #{server}"
       server.logger = nil
-      puts "cleared logger on server #{server}"
+      # puts "cleared logger on server #{server}"
 
       @server_registry.release_server(0)
-      puts "released server #{server} from client 0"
+      # puts "released server #{server} from client 0"
 
       result
     end

@@ -1,4 +1,3 @@
-# require 'bullring/util/drubied_process'
 require 'bullring/util/server_registry'
 require 'bullring/util/server_proxy'
 
@@ -24,20 +23,9 @@ module Bullring
         :max_bringup_time => Bullring.configuration.server_max_bringup_time
       }
       
-      # runtime_options = {
-      #   :run_timeout_secs => Bullring.configuration.execution_timeout_secs
-      # }
-      
       @server = ServerProxy.new(init_options)
-      @setup_provider = SetupProvider.new(self)
-      
-      # @server = DrubiedProcess.new(options) do |process|
-      #   process.configure({:run_timeout_secs => Bullring.configuration.execution_timeout_secs})
-      #   process.load_setup(SetupProvider.new(self))
-      # end
+      # @setup_provider = SetupProvider.new(self)
     end    
-    
-    # All methods need to get a server first
     
     def _add_library(name, script)
       rescue_me do
@@ -66,20 +54,20 @@ module Bullring
     
     def _discard;  end
     
-    # The SetupProvider gives a way for the server to pull all the libraries in case 
-    # of restart
-    
-    class SetupProvider
-      include DRbUndumped
-
-      def initialize(wrapped_provider)
-        @wrapped_provider = wrapped_provider
-      end
-
-      def libraries
-        @wrapped_provider.libraries
-      end
-    end
+    # # The SetupProvider gives a way for the server to pull all the libraries in case 
+    #  # of restart
+    #  
+    #  class SetupProvider
+    #    include DRbUndumped
+    # 
+    #    def initialize(wrapped_provider)
+    #      @wrapped_provider = wrapped_provider
+    #    end
+    # 
+    #    def libraries
+    #      @wrapped_provider.libraries
+    #    end
+    #  end
     
   private
   

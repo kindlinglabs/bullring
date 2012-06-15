@@ -35,10 +35,10 @@ module Bullring
       # Start up as a DRb server
       DRb.start_service uri, self
       
-      puts "about to register server #{uri}"
+      # puts "about to register server #{uri}"
       # Put ourselves on the registry
       @server_registry.register_server(uri)
-      puts 'finished register server'
+      # puts 'finished register server'
       
       logger.info {"#{logname}: Started a RhinoServer instance at #{Time.now}"}
       
