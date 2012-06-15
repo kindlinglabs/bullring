@@ -12,7 +12,7 @@ class BullringTest < Test::Unit::TestCase #ActiveSupport::TestCase
   
   def setup
     Bullring.configure do |config|
-      config.use_rhino = false
+      #config.use_rhino = false
     end
   end
   

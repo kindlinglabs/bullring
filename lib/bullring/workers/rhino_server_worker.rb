@@ -1,4 +1,6 @@
-require 'bullring/util/drubied_process'
+# require 'bullring/util/drubied_process'
+require 'bullring/util/server_registry'
+require 'bullring/util/server_proxy'
 
 module Bullring
 
@@ -7,9 +9,9 @@ module Bullring
     def initialize
       super
       
-      options = {}
-      options[:caller_name] = "Bullring"
-      options[:process] = {
+      init_options = {}
+      init_options[:caller_name] = "Bullring"
+      init_options[:process] = {
         :host => 'localhost',
         :port => Bullring.configuration.server_port,
         :command => File.join(Bullring.root, "/bullring/workers/rhino_server.sh"),
@@ -22,11 +24,20 @@ module Bullring
         :max_bringup_time => Bullring.configuration.server_max_bringup_time
       }
       
-      @server = DrubiedProcess.new(options) do |process|
-        process.configure({:run_timeout_secs => Bullring.configuration.execution_timeout_secs})
-        process.load_setup(SetupProvider.new(self))
-      end
+      # runtime_options = {
+      #   :run_timeout_secs => Bullring.configuration.execution_timeout_secs
+      # }
+      
+      @server = ServerProxy.new(init_options)
+      @setup_provider = SetupProvider.new(self)
+      
+      # @server = DrubiedProcess.new(options) do |process|
+      #   process.configure({:run_timeout_secs => Bullring.configuration.execution_timeout_secs})
+      #   process.load_setup(SetupProvider.new(self))
+      # end
     end    
+    
+    # All methods need to get a server first
     
     def _add_library(name, script)
       rescue_me do
@@ -35,13 +46,19 @@ module Bullring
     end
 
     def _check(script, options)
+      options[:setup_provider] ||= @setup_provider
+      
       rescue_me do 
         server.check(script, options)
       end
     end
 
     def _run(script, options)
+      options[:run_timeout_secs] ||= Bullring.configuration.execution_timeout_secs
+      # options[:setup_provider] ||= @setup_provider
+      
       rescue_me do
+        debugger
         result = server.run(script, options)
         result.respond_to?(:to_h) ? result.to_h : result      
       end
