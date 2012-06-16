@@ -116,8 +116,7 @@ class BullringTest < Test::Unit::TestCase #ActiveSupport::TestCase
       Bullring.add_library('testlib', library)
       
       result = Bullring.run(code, {"library_names" => ['testlib']})
-      assert_equal 4, result
-      
+      assert_equal 4, result      
     end
   
   test 'run complex' do

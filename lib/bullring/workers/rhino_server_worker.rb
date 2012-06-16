@@ -10,9 +10,7 @@ module Bullring
       
       init_options = {}
       init_options[:caller_name] = "Bullring"
-      init_options[:process] = {
-        :host => 'localhost',
-        :port => Bullring.configuration.server_port,
+      init_options[:server] = {
         :command => File.join(Bullring.root, "/bullring/workers/rhino_server.sh"),
         :args => [Bullring.root, 
                   "start", 
@@ -22,9 +20,15 @@ module Bullring
                   Bullring.configuration.jvm_young_heap_size],
         :max_bringup_time => Bullring.configuration.server_max_bringup_time
       }
+      init_options[:registry] = {
+        :host => "127.0.0.1",
+        :port => "2999"
+      }
+      init_options[:proxy] = {
+        :host => "127.0.0.1"
+      }
       
       @server = ServerProxy.new(init_options)
-      # @setup_provider = SetupProvider.new(self)
     end    
     
     def _add_library(name, script)
@@ -53,21 +57,6 @@ module Bullring
     end
     
     def _discard;  end
-    
-    # # The SetupProvider gives a way for the server to pull all the libraries in case 
-    #  # of restart
-    #  
-    #  class SetupProvider
-    #    include DRbUndumped
-    # 
-    #    def initialize(wrapped_provider)
-    #      @wrapped_provider = wrapped_provider
-    #    end
-    # 
-    #    def libraries
-    #      @wrapped_provider.libraries
-    #    end
-    #  end
     
   private
   
