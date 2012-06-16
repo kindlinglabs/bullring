@@ -28,6 +28,7 @@ module Bullring
       @options = options
       @after_connect_block = block
       # connect_to_process!
+      @local_service = DRb.start_service "druby://127.0.0.1:0"
       @server_registry = ServerRegistry.new("127.0.0.1","2999")
     end
     
@@ -59,21 +60,25 @@ module Bullring
 
     def method_missing(m, *args, &block)  
       restart_if_needed!
+
+      result = nil
       
-      # puts "about to lease server to run method #{m}"
-      server = @server_registry.lease_server(0) # TODO fix me
-      # puts "leased server #{server}"
+      begin
+        # puts "about to lease server to run method #{m}"
+        server = @server_registry.lease_server(0) # TODO fix me
+        # puts "leased server #{server}"
 
-      server.logger = Bullring.logger
-      # puts "set logger on server #{server}"
-      result = server.send(m, *args, &block)
-      # puts "ran method #{m} on server #{server}"
-      server.logger = nil
-      # puts "cleared logger on server #{server}"
-
-      @server_registry.release_server(0)
-      # puts "released server #{server} from client 0"
-
+        server.logger = Bullring.logger
+        # puts "set logger on server #{server}"
+        result = server.send(m, *args, &block)
+        # puts "ran method #{m} on server #{server}"
+        server.logger = nil
+        # puts "cleared logger on server #{server}"
+      ensure
+        @server_registry.release_server(0)
+        puts "released server #{server} from client 0"
+      end
+      
       result
     end
     

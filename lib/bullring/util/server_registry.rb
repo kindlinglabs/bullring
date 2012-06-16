@@ -68,9 +68,12 @@ module Bullring
     end
     
     def release_server(client_id)
-      ignore, ignore, uri = @tuplespace.take(['leased', client_id, nil])
-      register_server(uri)
-      dump_tuplespace
+      # In case the lease wasn't successful, don't hang on the release
+      begin
+        ignore, ignore, uri = @tuplespace.take(['leased', client_id, nil], 0) 
+        register_server(uri)
+      rescue Rinda::RequestExpiredError => e; end
+      # dump_tuplespace
     end
     
     def register_server(uri)
@@ -79,7 +82,9 @@ module Bullring
     end
     
     def dump_tuplespace
-      @tuplespace.read_all(['available', nil]).inspect + @tuplespace.read_all(['leased', nil, nil]).inspect
+      @tuplespace.read_all(['available', nil]).inspect + \
+      @tuplespace.read_all(['leased', nil, nil]).inspect + \
+      @tuplespace.read_all([nil, nil, nil]).inspect
     end
     
     def store_unique_data(type, name, data)

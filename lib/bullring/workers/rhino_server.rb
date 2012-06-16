@@ -22,7 +22,7 @@ module Bullring
     
     def initialize(uri)
       # @uri = uri
-      @library_scripts = {}
+      @library_cache = {}
       @setup_providers = []
       
       @default_options = { :run_is_sealed => false,
@@ -183,9 +183,11 @@ module Bullring
     # Goes back to the setup provider to the get the named script or throws an
     # exception if there is no such script to retrieve.
     def fetch_library(name)
-      logger.debug {"#{logname}: The script named #{name} was not available so trying to fetch from clients"}
+      logger.debug {"#{logname}: The script named #{name} was not available so trying to fetch it."}
 
       library_script = @server_registry['library', name]
+      
+      logger.debug {"#{logname}: The script named #{name} was #{'not' if library_script.nil?} found.: #{library_script if !library_script.nil?}"}
       
       # while (provider = @setup_providers.last)
       #   begin
@@ -205,6 +207,7 @@ module Bullring
       raise NameError, "Server cannot find a script named #{name}", caller if library_script.nil?
       
       # add_library(name, library_script)
+      library_script
     end
     
     def logname; "Bullring (Rhino Server)"; end
