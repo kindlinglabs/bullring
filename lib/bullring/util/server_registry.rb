@@ -28,6 +28,7 @@ module Bullring
         pid = Kernel.fork do
           @tuplespace = Rinda::TupleSpaceProxy.new(Rinda::TupleSpace.new)
           @tuplespace.write([:global_lock])
+          @tuplespace.write([:next_client_id, 0])
           DRb.start_service registry_uri, @tuplespace
           DRb.thread.join
         end
@@ -46,6 +47,12 @@ module Bullring
       # The registry should be available here so connect to it if we don't
       # already serve it.
       @tuplespace ||= DRbObject.new_with_uri(registry_uri)
+    end
+    
+    def next_available_client_id
+      _, id = @tuplespace.take([:next_client_id, nil])
+      @tuplespace.write([:next_client_id, id+1])
+      id
     end
         
     def lease_server(client_id)

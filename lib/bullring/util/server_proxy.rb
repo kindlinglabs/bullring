@@ -27,6 +27,7 @@ module Bullring
       @options = options
       @local_service = DRb.start_service "druby://#{options[:proxy][:host]}:0"
       @server_registry = ServerRegistry.new(options[:registry][:host],options[:registry][:port])
+      @my_client_id = @server_registry.next_available_client_id
     end
     
     def store_in_registry(dictionary, key, value)
@@ -47,13 +48,13 @@ module Bullring
       result = nil
       
       begin
-        server = @server_registry.lease_server(0) # TODO fix me
+        server = @server_registry.lease_server(@my_client_id)
 
         server.logger = Bullring.logger
         result = server.send(m, *args, &block)
         server.logger = nil
       ensure
-        @server_registry.release_server(0)
+        @server_registry.release_server(@my_client_id)
       end
       
       result
