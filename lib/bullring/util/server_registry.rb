@@ -32,14 +32,6 @@ module Bullring
           DRb.thread.join
         end
         Process.detach(pid)
-        
-        # if i_can_serve_the_registry
-        #   @tuplespace = Rinda::TupleSpaceProxy.new(Rinda::TupleSpace.new)
-        #   DRb.start_service uri, @tuplespace
-        # else
-        #   # Hang out til the registry becomes available
-        #   sleep(0.2) while registry_unavailable?
-        # end
       end
       
       time_sleeping = 0
@@ -57,14 +49,9 @@ module Bullring
     end
         
     def lease_server(client_id)
-      ignore, uri = @tuplespace.take(['available', nil])
-      # puts "took available server"
+      _, uri = @tuplespace.take(['available', nil])
       @tuplespace.write(['leased', client_id, uri])
-      # puts "noted that server as leased to client #{client_id}"
       @servers[uri] ||= DRbObject.new nil, uri
-      # puts "made a new DRb object (#{@servers[uri]})for that server and will return it next"
-      # dump_tuplespace
-      @servers[uri]
     end
     
     def release_server(client_id)
@@ -73,11 +60,9 @@ module Bullring
         ignore, ignore, uri = @tuplespace.take(['leased', client_id, nil], 0) 
         register_server(uri)
       rescue Rinda::RequestExpiredError => e; end
-      # dump_tuplespace
     end
     
     def register_server(uri)
-      # puts "in register server #{uri}"
       @tuplespace.write(['available', uri])
     end
     

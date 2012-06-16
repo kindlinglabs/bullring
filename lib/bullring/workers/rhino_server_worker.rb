@@ -8,9 +8,9 @@ module Bullring
     def initialize
       super
       
-      init_options = {}
-      init_options[:caller_name] = "Bullring"
-      init_options[:server] = {
+      proxy_options = {}
+      proxy_options[:caller_name] = "Bullring"
+      proxy_options[:server] = {
         :command => File.join(Bullring.root, "/bullring/workers/rhino_server.sh"),
         :args => [Bullring.root, 
                   "start", 
@@ -20,15 +20,15 @@ module Bullring
                   Bullring.configuration.jvm_young_heap_size],
         :max_bringup_time => Bullring.configuration.server_max_bringup_time
       }
-      init_options[:registry] = {
+      proxy_options[:registry] = {
         :host => "127.0.0.1",
         :port => "2999"
       }
-      init_options[:proxy] = {
+      proxy_options[:proxy] = {
         :host => "127.0.0.1"
       }
       
-      @server = ServerProxy.new(init_options)
+      @server = ServerProxy.new(proxy_options)     
     end    
     
     def _add_library(name, script)

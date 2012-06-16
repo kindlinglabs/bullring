@@ -1,6 +1,4 @@
 require 'test_helper'
-# require 'test/unit'
-# require 'bullring'
 require 'logger'
 
 if false
@@ -8,7 +6,7 @@ if false
   Bullring.logger.level = Logger::DEBUG
 end
 
-class BullringTest < Test::Unit::TestCase #ActiveSupport::TestCase
+class BullringTest < Test::Unit::TestCase 
   
   def setup
     Bullring.configure do |config|
@@ -26,7 +24,6 @@ class BullringTest < Test::Unit::TestCase #ActiveSupport::TestCase
   
   test "run multiline" do
     assert_nothing_raised do 
-      # debugger
       result = Bullring.run("3;\r\n4")
       assert_equal 4, result
     end

@@ -26,7 +26,7 @@ module Bullring
                            :run_timeout_secs => 0.5 }
       
       # Connect to the server registry
-      @server_registry = ServerRegistry.new("127.0.0.1","2999")
+      @server_registry = ServerRegistry.new("127.0.0.1","2999") # TODO pass in on command line (with bringup timeout)
       
       # Start up as a DRb server
       DRb.start_service uri, self
