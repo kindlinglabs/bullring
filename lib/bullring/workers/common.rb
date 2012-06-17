@@ -1,8 +1,23 @@
 
 
 module Bullring
-
-  class JSError < StandardError; end
+  
+  class JSError < StandardError
+    def initialize(msg = nil)
+      @hash = {}
+      super(msg)
+    end
+    
+    def []=(key, value)
+      @hash[key] = value
+    end
+    
+    def [](key)
+      @hash[key]
+    end
+    
+    attr_reader :hash
+  end
 
   class Helper
     def self.jslint_call(script)

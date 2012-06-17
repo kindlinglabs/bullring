@@ -104,8 +104,17 @@ module Bullring
         
         return duration, result
       rescue Rhino::JSError => e
-        logger.debug {"#{logname}: JSError! Cause: " + e.cause + "; Message: " + e.message}
-        raise Bullring::JSError, e.message.to_s
+        logger.debug {"#{logname}: JSError! #{e.inspect}"}
+        
+        error = Bullring::JSError.new(e.message.to_s)
+        
+        if e.message.respond_to?(:keys)
+          e.message.each do |k,v|
+            error[k.to_s] = v.to_s
+          end
+        end
+        
+        raise error
       rescue Rhino::RunawayScriptError, Rhino::ScriptTimeoutError => e
         logger.debug {"#{logname}: Runaway Script: " + e.inspect}
         raise Bullring::JSError, "Script took too long to run"
@@ -132,8 +141,6 @@ module Bullring
     def logname; "Bullring (Rhino Server)"; end
     
   end
-  
-  class JSError < StandardError; end
   
 end
 

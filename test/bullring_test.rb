@@ -150,4 +150,19 @@ class BullringTest < Test::Unit::TestCase
       
   end
   
+  test 'throwing object from js' do
+    
+    er = nil
+    begin
+      Bullring.run("throw {key1: 'hi', key2: 'there'};")
+    rescue Bullring::JSError => e
+      er = e
+    end
+    
+    assert_not_equal nil, er
+    
+    assert_equal er['key1'], 'hi'
+    assert_equal er['key2'], 'there'    
+  end
+  
 end
