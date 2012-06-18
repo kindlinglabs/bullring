@@ -43,7 +43,7 @@ module Bullring
     end
 
     def method_missing(m, *args, &block)  
-      restart_if_needed!
+      restart_if_needed!  # TODO put this into lease_server (means putting spawn_server into registry)
 
       result = nil
       
@@ -58,6 +58,10 @@ module Bullring
       end
       
       result
+    end
+    
+    def refresh
+      @server_registry.expire_servers
     end
     
     def spawn_server

@@ -39,6 +39,10 @@ module Bullring
       worker.discard
     end
     
+    def refresh
+      worker.refresh
+    end
+    
     def root
       @root ||= File.expand_path("..", __FILE__)
     end

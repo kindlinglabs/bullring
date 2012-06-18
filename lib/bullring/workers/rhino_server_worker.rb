@@ -58,6 +58,10 @@ module Bullring
     
     def _discard;  end
     
+    def _refresh
+      server.refresh
+    end
+    
   private
   
     def rescue_me

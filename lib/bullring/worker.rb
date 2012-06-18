@@ -34,6 +34,11 @@ module Bullring
       _discard
     end
     
+    def refresh
+      Bullring.logger.debug { "Bullring: Attempting to refresh." }
+      _refresh
+    end
+    
   protected
     
     # Quasi-template method pattern
