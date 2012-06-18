@@ -68,11 +68,16 @@ module Bullring
        
     # First starts up a server if needed then blocks until it is available and returns it
     def lease_server!
-      if num_current_generation_servers < MAX_SERVERS_PER_GENERATION && registry_open?
-        start_a_server 
-      end
+      begin
+        if num_current_generation_servers < MAX_SERVERS_PER_GENERATION && registry_open?
+          start_a_server 
+        end
 
-      lease_server
+        lease_server
+      rescue DRb::DRbConnError => e
+        Bullring.logger.debug {"Lost connection with a server, retrying..."}
+        retry
+      end
     end
     
     # Blocks until a server is available, then returns it
@@ -166,9 +171,19 @@ module Bullring
       options[:ignore_closed_registry] ||= false
       
       begin 
+        # Get the server from the TS
         _, generation, uri = @tuplespace.take(['available', options[:generation], nil], options[:timeout])
-        @tuplespace.write(['leased', @client_id, generation, uri])
+        # Get the DRb object for it
         @servers[uri] ||= DRbObject.new nil, uri
+        # Check that the server is still up; the following call will throw if it is down
+        @servers[uri].alive?
+        # Note that we've leased this server
+        @tuplespace.write(['leased', @client_id, generation, uri])
+        # Return it
+        @servers[uri]     
+      rescue DRb::DRbConnError => e
+        @servers[uri] = nil
+        raise   
       rescue Rinda::RequestExpiredError => e
         fail_unless_registry_open! if !options[:ignore_closed_registry]
       end
