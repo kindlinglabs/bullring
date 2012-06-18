@@ -41,17 +41,7 @@ module Bullring
       @server_registry[dictionary, key] = value
     end
 
-    # def alive?
-    #   @server_registry.servers_are_registered?
-    # end
-
-    # def restart_if_needed!
-    #   spawn_server if !@server_registry.servers_are_registered?
-    # end
-
     def method_missing(m, *args, &block)  
-      # restart_if_needed!  # TODO put this into lease_server (means putting spawn_server into registry)
-      debugger
       result = nil
       
       begin
@@ -74,14 +64,6 @@ module Bullring
     def refresh
       @server_registry.expire_servers
     end
-    
-    # def spawn_server
-    #   # Spawn the process in its own process group so it stays alive even if this process dies
-    #   pid = Process.spawn([@options[:server][:command], 
-    #                        @options[:server][:args]].flatten.join(" "), 
-    #                        {:pgroup => true})
-    #   Process.detach(pid)
-    # end
     
   end
   

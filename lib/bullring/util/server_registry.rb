@@ -65,7 +65,8 @@ module Bullring
       _, @client_id = @tuplespace.take([:next_client_id, nil])
       @tuplespace.write([:next_client_id, @client_id + 1])
     end
-        
+       
+    # First starts up a server if needed then blocks until it is available and returns it
     def lease_server!
       if num_current_generation_servers < MAX_SERVERS_PER_GENERATION && registry_open?
         start_a_server 
@@ -74,33 +75,10 @@ module Bullring
       lease_server
     end
     
+    # Blocks until a server is available, then returns it
     def lease_server
       server = _lease_server(:timeout => 2) until !server.nil?
       server
-      # begin
-      #   _, generation, uri = @tuplespace.take(['available', nil, nil], 2) # TODO can still take expired servers?
-      #   @tuplespace.write(['leased', @client_id, generation, uri])
-      #   @servers[uri] ||= DRbObject.new nil, uri      
-      # rescue Rinda::RequestExpiredError => e
-      #   fail_unless_registry_open!
-      #   lease_server
-      # end
-    end
-    
-    # If a server is unavailable after the timeout, either returns nil or throws 
-    # an exception if the registry is closed at that time.
-    #    options[:timeout] => a number of seconds or nil for no timeout
-    #    options[:generation] => a generation number or nil for no generation requirement
-    #    options[:ignore_closed_registry] => if true, don't throw exception if registry closed
-    def _lease_server(options)
-      options[:ignore_closed_registry] ||= false
-      begin 
-        _, generation, uri = @tuplespace.take(['available', options[:generation], nil], options[:timeout])
-        @tuplespace.write(['leased', @client_id, generation, uri])
-        @servers[uri] ||= DRbObject.new nil, uri
-      rescue Rinda::RequestExpiredError => e
-        fail_unless_registry_open! if !options[:ignore_closed_registry]
-      end
     end
     
     def release_server      
@@ -120,7 +98,6 @@ module Bullring
     end
     
     def expire_servers
-      debugger
       with_lock do
         _, generation = @tuplespace.take([:server_generation, nil])
         @tuplespace.write([:server_generation, generation + 1])
@@ -139,14 +116,14 @@ module Bullring
         
     def []=(dictionary, key, value)
       with_lock do
-        @tuplespace.take([dictionary, key, nil], 0) rescue nil
-        @tuplespace.write([dictionary, key, value])
+        @tuplespace.take(['data', dictionary, key, nil], 0) rescue nil
+        @tuplespace.write(['data', dictionary, key, value])
       end
     end
     
     def [](dictionary, key)
       with_lock do
-        _, _, value = @tuplespace.read([dictionary, key, nil], 0) rescue nil
+        _, _, _, value = @tuplespace.read(['data', dictionary, key, nil], 0) rescue nil
         return value
       end
     end
@@ -164,10 +141,6 @@ module Bullring
       num_servers(current_server_generation)
     end
     
-    # def servers_are_registered?
-    #   0 != num_current_generation_servers
-    # end
-    
     def registry_open?
       !tuple_present?([:registry_closed])
     end
@@ -175,10 +148,26 @@ module Bullring
     def dump_tuplespace
       "Available: " + @tuplespace.read_all(['available', nil, nil]).inspect + \
       ", Leased: " + @tuplespace.read_all(['leased', nil, nil, nil]).inspect + \
-      ", Data: " + @tuplespace.read_all([nil, nil, nil]).inspect
+      ", Data: " + @tuplespace.read_all(['data', nil, nil, nil]).inspect
     end
     
   private
+  
+    # If a server is unavailable after the timeout, either returns nil or throws 
+    # an exception if the registry is closed at that time.
+    #    options[:timeout] => a number of seconds or nil for no timeout
+    #    options[:generation] => a generation number or nil for no generation requirement
+    #    options[:ignore_closed_registry] => if true, don't throw exception if registry closed
+    def _lease_server(options)
+      options[:ignore_closed_registry] ||= false
+      begin 
+        _, generation, uri = @tuplespace.take(['available', options[:generation], nil], options[:timeout])
+        @tuplespace.write(['leased', @client_id, generation, uri])
+        @servers[uri] ||= DRbObject.new nil, uri
+      rescue Rinda::RequestExpiredError => e
+        fail_unless_registry_open! if !options[:ignore_closed_registry]
+      end
+    end
   
     def tuple_present?(tuple)
       begin
@@ -201,26 +190,15 @@ module Bullring
     end
       
     def kill_available_servers(generation = nil)
-      
+      # Leasing and releasing will guarantee that we have a DRbObject for the server
+      # and release_server already has the code for killing a server
       while num_servers(generation) != 0
         _lease_server({:timeout => 0, :ignore_closed_registry => true, :generation => generation}) 
         release_server
       end
-      
-      # server = _lease_server({:timeout => 0, :ignore_closed_registry => true}) 
-      # 
-      # release_server
-      # 
-      # begin
-      #   while (tuple = @tuplespace.take(['available', generation, nil], 0))
-      #     kill_server(tuple[2])
-      #   end
-      # rescue
-      # end
     end
   
     def start_a_server
-      debugger
       raise IllegalState "The command to start a server is unavailable." if @start_server_block.nil?
       @start_server_block.call
     end
