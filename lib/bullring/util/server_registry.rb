@@ -77,7 +77,7 @@ module Bullring
     
     # Blocks until a server is available, then returns it
     def lease_server
-      server = _lease_server(:timeout => 2) until !server.nil?
+      server = _lease_server(:timeout => 0) until !server.nil?
       server
     end
     
@@ -145,6 +145,10 @@ module Bullring
       !tuple_present?([:registry_closed])
     end
     
+    def registry_unavailable?
+      Network::is_port_open?(@registry_host, @registry_port)
+    end
+    
     def dump_tuplespace
       "Available: " + @tuplespace.read_all(['available', nil, nil]).inspect + \
       ", Leased: " + @tuplespace.read_all(['leased', nil, nil, nil]).inspect + \
@@ -155,11 +159,12 @@ module Bullring
   
     # If a server is unavailable after the timeout, either returns nil or throws 
     # an exception if the registry is closed at that time.
-    #    options[:timeout] => a number of seconds or nil for no timeout
+    #    options[:timeout] => a number of seconds or nil for no timeout (only use 0 or nil)
     #    options[:generation] => a generation number or nil for no generation requirement
     #    options[:ignore_closed_registry] => if true, don't throw exception if registry closed
     def _lease_server(options)
       options[:ignore_closed_registry] ||= false
+      
       begin 
         _, generation, uri = @tuplespace.take(['available', options[:generation], nil], options[:timeout])
         @tuplespace.write(['leased', @client_id, generation, uri])
@@ -176,10 +181,6 @@ module Bullring
       rescue
         false
       end
-    end
-  
-    def registry_unavailable?
-      Network::is_port_open?(@registry_host, @registry_port)
     end
   
     def with_lock
