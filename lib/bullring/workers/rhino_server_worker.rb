@@ -56,7 +56,9 @@ module Bullring
       server.alive?
     end
     
-    def _discard;  end
+    def _discard;  
+      server.discard
+    end
     
     def _refresh
       server.refresh
