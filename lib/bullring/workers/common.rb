@@ -57,7 +57,7 @@ module Bullring
           
     def self.prepare_source(source) 
      # escape javascript characters (similar to Rails escape_javascript)
-     source.gsub!(/(\\|\r\n|[\n\r"'])/u) {|match| ESCAPE_MAP[match] }
+     (source ||= '').gsub!(/(\\|\r\n|[\n\r"'])/u) {|match| ESCAPE_MAP[match] }
      source   
     end
     

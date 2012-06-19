@@ -111,7 +111,6 @@ module Bullring
        
     # First starts up a server if needed then blocks until it is available and returns it
     def lease_server!
-      debugger
       begin
         if num_current_generation_servers < MAX_SERVERS_PER_GENERATION && registry_open?
           start_a_server 
@@ -119,9 +118,9 @@ module Bullring
 
         lease_server
       rescue ServerOffline => e
-             Bullring.logger.debug {"Lost connection with a server, retrying..."}
-             retry
-           end
+        Bullring.logger.debug {"Lost connection with a server, retrying..."}
+        retry
+      end
     end
     
     # Blocks until a server is available, then returns it

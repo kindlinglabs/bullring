@@ -165,4 +165,11 @@ class BullringTest < Test::Unit::TestCase
     assert_equal er['key2'], 'there'    
   end
   
+  test 'can check nil and blank code' do
+    assert_nothing_raised do
+      Bullring.check(nil)
+      Bullring.check('')
+    end
+  end
+  
 end
