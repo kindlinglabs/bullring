@@ -18,7 +18,7 @@ module Bullring
 
   class RhinoServer
         
-    def initialize(uri)
+    def initialize(host)
       @library_cache = {}
       
       @default_options = { :run_is_sealed => false,
@@ -28,11 +28,25 @@ module Bullring
       # Connect to the server registry
       @server_registry = ServerRegistry.new("127.0.0.1","2999") # TODO pass in on command line (with bringup timeout)
       
-      # Start up as a DRb server
+      # Start up as a DRb server (get the port from the registry)
+      port = @server_registry.next_server_port
+      uri = "druby://#{host}:#{port}"
       DRb.start_service uri, self
       
       # Put ourselves on the registry
       @server_registry.register_server(uri)
+      
+      Thread.new do
+        while (true) do
+          sleep(5)
+          begin 
+            @server_registry.test!
+          rescue
+            DRb.stop_service
+            Thread.main.exit
+          end
+        end
+      end
       
       DRb.thread.join
     end
@@ -89,7 +103,8 @@ module Bullring
     end
     
     def self.start(myPort, clientPort)
-      RhinoServer.new("druby://127.0.0.1:#{myPort}")
+      # RhinoServer.new("druby://127.0.0.1:#{myPort}")
+      RhinoServer.new("127.0.0.1")
     end
     
   protected

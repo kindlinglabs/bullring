@@ -35,14 +35,15 @@ module Bullring
       result = nil
       num_retries = 0
 
+      server = nil
       begin
         server = server_registry.lease_server!
 
         server.logger = Bullring.logger
         result = server.send(m, *args, &block)
         server.logger = nil
-      rescue DRb::DRbConnError => e
-        Bullring.logger.debug {"Lost connection to the server registry"}
+      rescue ServerRegistryOffline => e
+        Bullring.logger.debug {"Lost connection to the server registry (proxy)"}
         connect!
         num_retries = num_retries + 1
         if (num_retries < 3)
@@ -51,7 +52,7 @@ module Bullring
           raise 
         end
       ensure
-        server_registry.release_server
+        server_registry.release_server if !server.nil?
       end
 
       result
@@ -83,7 +84,7 @@ module Bullring
         # stays alive even if the originating process dies)
         pid = Process.spawn([@options[:server][:command], 
                              @options[:server][:args]].flatten.join(" "), 
-                             {:pgroup => false})
+                             {:pgroup => true})
         Process.detach(pid)
 
       end

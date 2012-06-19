@@ -12,6 +12,41 @@ end
 require_relative 'network'
 
 module Bullring
+  
+  class TuplespaceWrapper
+    def initialize(uri)
+      @tuplespace = DRbObject.new_with_uri(uri)
+    end
+    
+    def method_missing(m, *args, &block)  
+      begin
+        @tuplespace.send(m, *args, &block)
+      rescue DRb::DRbConnError, Errno::ECONNREFUSED => e
+        Bullring.logger.debug {"Lost connection to the server registry"}
+        raise ServerRegistryOffline, "The connection to the server registry was lost"
+      end
+    end
+  end
+  
+  class ServerWrapper
+    
+    attr_reader :server
+    
+    def initialize(uri)
+      @uri = uri
+      @server = DRbObject.new_with_uri(uri)
+    end
+    
+    def method_missing(m, *args, &block)  
+      begin
+        @server.send(m, *args, &block)
+      rescue DRb::DRbConnError, Errno::ECONNREFUSED => e
+        Bullring.logger.debug {"Lost connection to the server at #{@uri}"}
+        raise ServerOffline, "The connection to the server at #{@uri} was lost"
+      end
+    end
+  end
+  
   class ServerRegistry
    
     attr_reader :tuplespace
@@ -33,6 +68,7 @@ module Bullring
           @tuplespace.write([:global_lock])
           @tuplespace.write([:next_client_id, 0])
           @tuplespace.write([:server_generation, 0])
+          @tuplespace.write([:next_server_port, 3030])
           DRb.start_service registry_uri, @tuplespace
           
           Thread.new do
@@ -58,26 +94,35 @@ module Bullring
       
       # The registry should be available here so connect to it if we don't
       # already serve it.
-      @tuplespace ||= DRbObject.new_with_uri(registry_uri)
+      @tuplespace ||= start_server_block.nil? ? DRbObject.new_with_uri(registry_uri) : TuplespaceWrapper.new(registry_uri) #DRbObject.new_with_uri(registry_uri)
+      # @tuplespace ||= DRbObject.new_with_uri(registry_uri)
       
       # Every user (client) of server registry has its own instance of the registry, so that
       # instance can store its own client id.
       _, @client_id = @tuplespace.take([:next_client_id, nil])
       @tuplespace.write([:next_client_id, @client_id + 1])
     end
+    
+    def next_server_port
+      _, port = @tuplespace.take([:next_server_port, nil])
+      port = port + 1 while !Network::is_port_open?("127.0.0.1", port)
+      @tuplespace.write([:next_server_port, port + 1])
+      port
+    end
        
     # First starts up a server if needed then blocks until it is available and returns it
     def lease_server!
+      debugger
       begin
         if num_current_generation_servers < MAX_SERVERS_PER_GENERATION && registry_open?
           start_a_server 
         end
 
         lease_server
-      rescue DRb::DRbConnError => e
-        Bullring.logger.debug {"Lost connection with a server, retrying..."}
-        retry
-      end
+      rescue ServerOffline => e
+             Bullring.logger.debug {"Lost connection with a server, retrying..."}
+             retry
+           end
     end
     
     # Blocks until a server is available, then returns it
@@ -94,7 +139,7 @@ module Bullring
         # Only register the server if its generation hasn't expired, otherwise
         # kill and forget
         if generation < current_server_generation || !registry_open?
-          @servers[uri].kill rescue DRb::DRbConnError
+          @servers[uri].kill rescue ServerOffline
           @servers[uri] = nil
         else
           register_server(uri) 
@@ -150,6 +195,10 @@ module Bullring
       !tuple_present?([:registry_closed])
     end
     
+    def test!
+      @tuplespace.write([:temp])
+    end
+    
     def registry_unavailable?
       Network::is_port_open?(@registry_host, @registry_port)
     end
@@ -174,14 +223,14 @@ module Bullring
         # Get the server from the TS
         _, generation, uri = @tuplespace.take(['available', options[:generation], nil], options[:timeout])
         # Get the DRb object for it
-        @servers[uri] ||= DRbObject.new nil, uri
+        @servers[uri] ||= ServerWrapper.new(uri)
         # Check that the server is still up; the following call will throw if it is down
         @servers[uri].alive?
         # Note that we've leased this server
         @tuplespace.write(['leased', @client_id, generation, uri])
         # Return it
-        @servers[uri]     
-      rescue DRb::DRbConnError => e
+        @servers[uri] #.server    
+      rescue ServerOffline => e
         @servers[uri] = nil
         raise   
       rescue Rinda::RequestExpiredError => e
@@ -216,6 +265,7 @@ module Bullring
   
     def start_a_server
       raise IllegalState "The command to start a server is unavailable." if @start_server_block.nil?
+      
       @start_server_block.call
     end
   
@@ -226,6 +276,8 @@ module Bullring
   end
   
   class ServerRegistryClosed < StandardError; end
+  class ServerRegistryOffline < StandardError; end
+  class ServerOffline < StandardError; end
   
 end
   
