@@ -14,18 +14,20 @@ module Bullring
         :command => File.join(Bullring.root, "/bullring/workers/rhino_server.sh"),
         :args => [Bullring.root, 
                   "start", 
-                  "#{Bullring.configuration.server_port}",
+                  "#{Bullring.configuration.server_host}",
+                  "#{Bullring.configuration.registry_port}",
                   Bullring.configuration.jvm_init_heap_size,
                   Bullring.configuration.jvm_max_heap_size,
                   Bullring.configuration.jvm_young_heap_size],
+        :first_port => "#{Bullring.configuration.first_server_port}",
         :max_bringup_time => Bullring.configuration.server_max_bringup_time
       }
       proxy_options[:registry] = {
-        :host => "127.0.0.1",
-        :port => "2999"
+        :host => "#{Bullring.configuration.server_host}",
+        :port => "#{Bullring.configuration.registry_port}"
       }
       proxy_options[:proxy] = {
-        :host => "127.0.0.1"
+        :host => "#{Bullring.configuration.server_host}"
       }
       
       @server = ServerProxy.new(proxy_options)     

@@ -53,8 +53,8 @@ module Bullring
    
     MAX_SERVERS_PER_GENERATION = 1
    
-    def initialize(host, port, &start_server_block)
-      @registry_host = host
+    def initialize(host, port, first_server_port, &start_server_block)
+      @registry_host = @server_host = host
       @registry_port = port
       @start_server_block = start_server_block
       
@@ -68,7 +68,7 @@ module Bullring
           @tuplespace.write([:global_lock])
           @tuplespace.write([:next_client_id, 0])
           @tuplespace.write([:server_generation, 0])
-          @tuplespace.write([:next_server_port, 3030])
+          @tuplespace.write([:next_server_port, "#{first_server_port}"]) if !first_server_port.nil?
           DRb.start_service registry_uri, @tuplespace
           
           Thread.new do
@@ -104,8 +104,8 @@ module Bullring
     
     def next_server_port
       _, port = @tuplespace.take([:next_server_port, nil])
-      port = port + 1 while !Network::is_port_open?("127.0.0.1", port)
-      @tuplespace.write([:next_server_port, port + 1])
+      port = port.to_i + 1 while !Network::is_port_open?(@server_host, port)
+      @tuplespace.write([:next_server_port, "#{port.to_i + 1}"])
       port
     end
        

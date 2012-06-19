@@ -70,7 +70,9 @@ module Bullring
 
     class Configuration
       attr_accessor :execution_timeout_secs
-      attr_accessor :server_port
+      attr_accessor :server_host
+      attr_accessor :first_server_port
+      attr_accessor :registry_port
       attr_accessor :jvm_init_heap_size
       attr_accessor :jvm_max_heap_size
       attr_accessor :jvm_young_heap_size
@@ -80,7 +82,9 @@ module Bullring
       
       def initialize      
         @execution_timeout_secs = 0.5
-        @server_port = 3030
+        @server_host = "127.0.0.1"
+        @first_server_port = 3030
+        @registry_port = 2999
         @jvm_init_heap_size = '128m'
         @jvm_max_heap_size = '128m'
         @jvm_young_heap_size = '64m'

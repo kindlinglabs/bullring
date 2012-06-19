@@ -12,7 +12,8 @@ module Bullring
     # {
     #   :server => {
     #     :command => [the command to run the process],
-    #     :args => [the arguments to the process command]
+    #     :args => [the arguments to the process command],
+    #     :first_port => [the first port to be used by a server]
     #   }
     #   :registry => {
     #     :host => [the host of the registry]
@@ -79,7 +80,7 @@ module Bullring
     def connect!
       DRb.stop_service
       @local_service = DRb.start_service "druby://#{@options[:proxy][:host]}:0"
-      @server_registry = ServerRegistry.new(@options[:registry][:host],@options[:registry][:port]) do
+      @server_registry = ServerRegistry.new(@options[:registry][:host],@options[:registry][:port], @options[:server][:first_port]) do
         # Block to start a new server (spawn in its own process group so it 
         # stays alive even if the originating process dies)
         pid = Process.spawn([@options[:server][:command], 

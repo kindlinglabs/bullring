@@ -4,10 +4,11 @@
 
 BULLRING_ROOT=$1
 DAEMON_CMD=$2
-PORT=$3
-INIT_HEAP_SIZE=$4     # Xms, e.g. 128m
-MAX_HEAP_SIZE=$5      # Xmx, e.g. 128m
-YOUNG_HEAP_SIZE=$6    # Xmn, e.g. 92m
+HOST=$3
+REGISTRY_PORT=$4
+INIT_HEAP_SIZE=$5     # Xms, e.g. 128m
+MAX_HEAP_SIZE=$6      # Xmx, e.g. 128m
+YOUNG_HEAP_SIZE=$7    # Xmn, e.g. 92m
 
 # Load RVM into a shell session *as a function*
 if [[ -s "$HOME/.rvm/scripts/rvm" ]] ; then
@@ -43,4 +44,4 @@ BUNDLE_BIN_PATH=
 $ruby_bin -J-Xmn$YOUNG_HEAP_SIZE -J-Xms$INIT_HEAP_SIZE -J-Xmx$MAX_HEAP_SIZE \
           -J-server \
           -I $rhino_gem_dir/lib \
-          $BULLRING_ROOT/bullring/workers/rhino_server.rb $DAEMON_CMD $PORT
+          $BULLRING_ROOT/bullring/workers/rhino_server.rb $DAEMON_CMD $HOST $REGISTRY_PORT
