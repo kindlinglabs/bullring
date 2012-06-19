@@ -36,6 +36,7 @@ module Bullring
       # Put ourselves on the registry
       @server_registry.register_server(uri)
       
+      # Keep an eye on the registry, if it dies, we should die
       Thread.new do
         while (true) do
           sleep(5)
@@ -103,7 +104,6 @@ module Bullring
     end
     
     def self.start(myPort, clientPort)
-      # RhinoServer.new("druby://127.0.0.1:#{myPort}")
       RhinoServer.new("127.0.0.1")
     end
     

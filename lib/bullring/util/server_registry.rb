@@ -94,8 +94,7 @@ module Bullring
       
       # The registry should be available here so connect to it if we don't
       # already serve it.
-      @tuplespace ||= start_server_block.nil? ? DRbObject.new_with_uri(registry_uri) : TuplespaceWrapper.new(registry_uri) #DRbObject.new_with_uri(registry_uri)
-      # @tuplespace ||= DRbObject.new_with_uri(registry_uri)
+      @tuplespace ||= TuplespaceWrapper.new(registry_uri)
       
       # Every user (client) of server registry has its own instance of the registry, so that
       # instance can store its own client id.
