@@ -61,7 +61,9 @@ module Bullring
     end
             
     def get_library(name)
-      @library_cache[name] ||= fetch_library(name)
+      # If try to use the cache, tests that change libraries fail
+      #   @library_cache[name] ||= fetch_library(name)
+      fetch_library(name)
     end
     
     def check(script, options)
