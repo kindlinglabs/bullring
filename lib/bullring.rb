@@ -18,29 +18,32 @@ module Bullring
     
     # Order is important (and relative to calls to add_library_script)
     def add_library(name, script)
+      return if configuration.disabled
       script = Uglifier.compile(script, :copyright => false) if configuration.minify_libraries
       worker.add_library(name, script)
     end
     
     def check(script, options = {})
+      return [] if configuration.disabled
       worker.check(script, options)
     end
     
     def run(script, options = {})
+      return {} if configuration.disabled
       worker.run(script, options)
     end
     
     def alive?
-      worker.alive?
+      configuration.disabled ? true : worker.alive?
     end
     
     # Really only useful in development
     def discard
-      worker.discard
+      worker.discard if !configuration.disabled
     end
     
     def refresh
-      worker.refresh
+      worker.refresh if !configuration.disabled
     end
     
     def root
@@ -79,6 +82,7 @@ module Bullring
       attr_accessor :minify_libraries
       attr_accessor :server_max_bringup_time
       attr_accessor :use_rhino
+      attr_accessor :disabled
       
       def initialize      
         @execution_timeout_secs = 0.5
@@ -91,6 +95,7 @@ module Bullring
         @minify_libraries = true
         @server_max_bringup_time = 20 #seconds
         @use_rhino = true
+        @disabled = false
         super
       end
     end
