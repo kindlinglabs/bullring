@@ -10,7 +10,7 @@ class BullringTest < Test::Unit::TestCase
   
   def setup
     Bullring.configure do |config|
-      #config.use_rhino = false
+      config.runtime = :racer
     end
   end
   
@@ -150,8 +150,19 @@ class BullringTest < Test::Unit::TestCase
       
   end
   
+  test 'throw string from js' do
+    er = nil
+    begin
+      Bullring.run("throw 'some text';")
+    rescue Bullring::JSError => e
+      er = e
+    end
+
+    assert_not_equal nil, er
+    assert_equal 'some text', er.message
+  end
+
   test 'throwing object from js' do
-    
     er = nil
     begin
       Bullring.run("throw {key1: 'hi', key2: 'there'};")
@@ -160,9 +171,8 @@ class BullringTest < Test::Unit::TestCase
     end
     
     assert_not_equal nil, er
-    
-    assert_equal er['key1'], 'hi'
-    assert_equal er['key2'], 'there'    
+    assert_equal 'hi', er['key1']
+    assert_equal 'there', er['key2']
   end
   
   test 'can check nil and blank code' do

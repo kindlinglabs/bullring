@@ -4,7 +4,10 @@ module Bullring
   
   class JSError < StandardError
     def initialize(msg = nil)
-      @hash = {}
+      if msg.instance_of?(Hash)
+        @hash = msg
+        msg = msg.to_s
+      end
       super(msg)
     end
     

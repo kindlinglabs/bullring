@@ -81,7 +81,7 @@ module Bullring
       attr_accessor :jvm_young_heap_size
       attr_accessor :minify_libraries
       attr_accessor :server_max_bringup_time
-      attr_accessor :use_rhino
+      attr_accessor :runtime
       attr_accessor :disabled
       
       def initialize      
@@ -94,7 +94,7 @@ module Bullring
         @jvm_young_heap_size = '64m'
         @minify_libraries = true
         @server_max_bringup_time = 20 #seconds
-        @use_rhino = true
+        @runtime = :rhino
         @disabled = false
         super
       end
@@ -103,7 +103,15 @@ module Bullring
   private
     
     def worker
-      @worker ||= configuration.use_rhino ? RhinoServerWorker.new : RacerWorker.new
+      @worker ||= 
+        case configuration.runtime 
+        when :rhino 
+          RhinoServerWorker.new 
+        when :racer 
+          RacerWorker.new
+        else
+          raise Bullring::IllegalArgument, "invalid runtime"
+        end
     end
     
   end

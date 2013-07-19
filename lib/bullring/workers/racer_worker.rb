@@ -52,18 +52,27 @@ module Bullring
         return duration, result            
         
       rescue V8::JSError => e
-        Bullring.logger.debug {"#{logname}: JSError! Cause: " + e.cause + "; Message: " + e.message}
-        raise Bullring::JSError, e.message.to_s, caller
-      # rescue Rhino::RunawayScriptError, Rhino::ScriptTimeoutError => e
-      #   logger.debug {"#{logname}: Runaway Script: " + e.inspect}
-      #   raise Bullring::JSError, "Script took too long to run", caller
-      # rescue Timeout::Error => e
-      #   Bullring.logger.error {"#{logname}: Runaway script: #{e.inspect}"}
+        value = cleanup_exception_value(e.value)
+        Bullring.logger.debug {"#{logname}: JSError! [#{value.to_s}]"}
+        raise Bullring::JSError, value, caller
       rescue NameError => e
         Bullring.logger.debug {"#{logname}: Name error: " + e.inspect}
       rescue StandardError => e
         Bullring.logger.debug {"#{logname}: StandardError: " + e.inspect}
         raise
+      end
+    end
+
+    def cleanup_exception_value(value)
+      case value
+      when String, Hash
+        value
+      when V8::Object
+        hash = {}
+        value.each{|k,v| hash[k] = cleanup_exception_value(v)}
+        hash
+      else
+        value.to_s
       end
     end
     
